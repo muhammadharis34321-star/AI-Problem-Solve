@@ -1293,7 +1293,7 @@
       display: block; /* mobile pe show */
        position: fixed;
       top: 15px;
-      right: 20px;
+      right: 1px;
       z-index: 25;
     }
   
