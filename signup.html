@@ -274,6 +274,12 @@
         users.push({ name, email, password });
         localStorage.setItem("users", JSON.stringify(users));
 
+        // ✅ AUTOMATIC LOGIN - YEH NAYA CODE ADD KIYA HAI
+        localStorage.setItem('currentUser', JSON.stringify({
+          name: name,
+          email: email
+        }));
+
         // 🔥 YEH IMPORTANT CODE HAI - Admin ke liye data save karo
         const allUsersData = JSON.parse(localStorage.getItem("allUsersData")) || [];
         allUsersData.push({
@@ -284,15 +290,16 @@
           lastLogin: new Date().toISOString()
         });
         localStorage.setItem("allUsersData", JSON.stringify(allUsersData));
-        // 🔥 YAHAN TAK IMPORTANT CODE
 
         showMessage(
-          "Account created successfully! Redirecting to login...",
+          "Account created successfully! Redirecting...", // Message change kiya
           "success"
         );
+        
+        // ✅ DIRECT CHAT PAGE PE JAO - YEH LINE CHANGE KI HAI
         setTimeout(() => {
-          window.location.href = "login.html";
-        }, 1500);
+          window.location.href = "index.html";
+        }, 1000);
       }
 
       // Enter key support
