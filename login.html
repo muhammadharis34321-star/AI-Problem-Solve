@@ -131,6 +131,12 @@
             box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
         }
 
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
         .footer-links {
             text-align: center;
             margin-top: 25px;
@@ -186,6 +192,21 @@
             color: #667eea;
         }
 
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
         @media (max-width: 480px) {
             .glass-container {
                 padding: 40px 24px;
@@ -224,7 +245,7 @@
             <a href="#">Forgot password?</a>
         </div>
 
-        <button class="btn-primary" onclick="handleLogin()">
+        <button class="btn-primary" id="loginBtn" onclick="handleLogin()">
             Login
         </button>
 
@@ -234,6 +255,8 @@
     </div>
 
     <script>
+        const BACKEND_URL = 'http://localhost:5000'; // Change to your PythonAnywhere URL
+
         function showMessage(message, type) {
             const errorDiv = document.getElementById('errorMessage');
             const successDiv = document.getElementById('successMessage');
@@ -254,7 +277,6 @@
         const passwordInput = document.getElementById('password');
 
         passwordToggle.addEventListener('click', function() {
-            // Toggle password visibility
             if (passwordInput.type === 'password') {
                 passwordInput.type = 'text';
                 passwordToggle.classList.remove('fa-eye');
@@ -266,51 +288,54 @@
             }
         });
 
-        function handleLogin() {
+        async function handleLogin() {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
+            const loginBtn = document.getElementById('loginBtn');
 
             if (!email || !password) {
                 showMessage('Please fill in all fields', 'error');
                 return;
             }
 
-            const users = JSON.parse(localStorage.getItem('users')) || [];
-            const user = users.find(u => u.email === email && u.password === password);
+            // Show loading state
+            loginBtn.innerHTML = '<div class="loading-spinner"></div> Logging in...';
+            loginBtn.disabled = true;
 
-            if (user) {
-                // User ko simple data dikhao
-                localStorage.setItem('currentUser', JSON.stringify({
-                    name: user.name,
-                    email: user.email
-                }));
-                
-                // Aapke liye complete data save karo
-                const allUsersData = JSON.parse(localStorage.getItem('allUsersData')) || [];
-                const existingUserIndex = allUsersData.findIndex(u => u.email === email);
-                
-                if (existingUserIndex === -1) {
-                    // New user - complete data save karo
-                    allUsersData.push({
-                        name: user.name,
-                        email: user.email,
-                        password: user.password,
-                        signupDate: new Date().toISOString(),
-                        lastLogin: new Date().toISOString()
-                    });
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        password: password
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Save user data and token
+                    localStorage.setItem('currentUser', JSON.stringify(data.user));
+                    localStorage.setItem('authToken', data.token);
+                    
+                    showMessage('Login successful! Redirecting...', 'success');
+                    
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 1000);
                 } else {
-                    // Existing user - last login update karo
-                    allUsersData[existingUserIndex].lastLogin = new Date().toISOString();
+                    showMessage(data.error || 'Login failed', 'error');
                 }
-                
-                localStorage.setItem('allUsersData', JSON.stringify(allUsersData));
-                
-                showMessage('Login successful! Redirecting...', 'success');
-                setTimeout(() => {
-                    window.location.href = 'index.html';
-                }, 1000);
-            } else {
-                showMessage('Invalid email or password', 'error');
+            } catch (error) {
+                console.error('Login error:', error);
+                showMessage('Network error. Please try again.', 'error');
+            } finally {
+                // Reset button state
+                loginBtn.innerHTML = 'Login';
+                loginBtn.disabled = false;
             }
         }
 
@@ -319,7 +344,7 @@
             if (e.key === 'Enter') handleLogin();
         });
 
-        // Check existing session
+        // Check if already logged in
         if (localStorage.getItem('currentUser')) {
             window.location.href = 'index.html';
         }
