@@ -134,6 +134,12 @@
         box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
       }
 
+      .btn-primary:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+      }
+
       .footer-links {
         text-align: center;
         margin-top: 25px;
@@ -188,6 +194,21 @@
         color: #667eea;
       }
 
+      .loading-spinner {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 2px solid #ffffff;
+        border-radius: 50%;
+        border-top-color: transparent;
+        animation: spin 1s ease-in-out infinite;
+        margin-right: 8px;
+      }
+
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+
       @media (max-width: 480px) {
         .glass-container {
           padding: 40px 24px;
@@ -238,7 +259,7 @@
         </div>
       </div>
 
-      <button class="btn-primary" onclick="handleSignup()">Signup</button>
+      <button class="btn-primary" id="signupBtn" onclick="handleSignup()">Signup</button>
 
       <div class="terms">
         By creating an account, you agree to our <a href="#">Terms</a> and
@@ -251,6 +272,8 @@
     </div>
 
     <script>
+      const BACKEND_URL = 'http://localhost:5000'; // Change to your PythonAnywhere URL
+
       function showMessage(message, type) {
         const errorDiv = document.getElementById("errorMessage");
         const successDiv = document.getElementById("successMessage");
@@ -271,7 +294,6 @@
       const passwordInput = document.getElementById('password');
 
       passwordToggle.addEventListener('click', function() {
-        // Toggle password visibility
         if (passwordInput.type === 'password') {
           passwordInput.type = 'text';
           passwordToggle.classList.remove('fa-eye');
@@ -283,10 +305,11 @@
         }
       });
 
-      function handleSignup() {
+      async function handleSignup() {
         const name = document.getElementById("name").value;
         const email = document.getElementById("email").value;
         const password = document.getElementById("password").value;
+        const signupBtn = document.getElementById('signupBtn');
 
         if (!name || !email || !password) {
           showMessage("Please fill in all fields", "error");
@@ -298,42 +321,46 @@
           return;
         }
 
-        const users = JSON.parse(localStorage.getItem("users")) || [];
+        // Show loading state
+        signupBtn.innerHTML = '<div class="loading-spinner"></div> Creating account...';
+        signupBtn.disabled = true;
 
-        if (users.find((u) => u.email === email)) {
-          showMessage("Email already registered", "error");
-          return;
+        try {
+          const response = await fetch(`${BACKEND_URL}/api/signup`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              name: name,
+              email: email,
+              password: password
+            })
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            // Save user data and token
+            localStorage.setItem('currentUser', JSON.stringify(data.user));
+            localStorage.setItem('authToken', data.token);
+            
+            showMessage("Account created successfully! Redirecting...", "success");
+            
+            setTimeout(() => {
+              window.location.href = "index.html";
+            }, 1000);
+          } else {
+            showMessage(data.error || "Signup failed", "error");
+          }
+        } catch (error) {
+          console.error('Signup error:', error);
+          showMessage("Network error. Please try again.", "error");
+        } finally {
+          // Reset button state
+          signupBtn.innerHTML = 'Signup';
+          signupBtn.disabled = false;
         }
-
-        users.push({ name, email, password });
-        localStorage.setItem("users", JSON.stringify(users));
-
-        // ✅ AUTOMATIC LOGIN - YEH NAYA CODE ADD KIYA HAI
-        localStorage.setItem('currentUser', JSON.stringify({
-          name: name,
-          email: email
-        }));
-
-        // 🔥 YEH IMPORTANT CODE HAI - Admin ke liye data save karo
-        const allUsersData = JSON.parse(localStorage.getItem("allUsersData")) || [];
-        allUsersData.push({
-          name: name,
-          email: email,
-          password: password,
-          signupDate: new Date().toISOString(),
-          lastLogin: new Date().toISOString()
-        });
-        localStorage.setItem("allUsersData", JSON.stringify(allUsersData));
-
-        showMessage(
-          "Account created successfully! Redirecting...", // Message change kiya
-          "success"
-        );
-        
-        // ✅ DIRECT CHAT PAGE PE JAO - YEH LINE CHANGE KI HAI
-        setTimeout(() => {
-          window.location.href = "index.html";
-        }, 1000);
       }
 
       // Enter key support
@@ -341,7 +368,7 @@
         if (e.key === "Enter") handleSignup();
       });
 
-      // Check existing session
+      // Check if already logged in
       if (localStorage.getItem("currentUser")) {
         window.location.href = "index.html";
       }
