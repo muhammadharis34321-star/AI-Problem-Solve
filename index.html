@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta name="google-site-verification" content="KjhbTLya1ngONTyWGFpuTM82qfQmg9GDb1vLmWsyufo" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI PROBLEM SOLVE</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="icon" type="image/x-icon" href="https://cdn-icons-png.flaticon.com/512/4712/4712035.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  </head>
+  <body>
+    <div class="app-container">
+      <!-- Sidebar -->
+      <div class="sidebar">
+        <div class="sidebar-header">
+          <div class="user-profile">
+            <img
+              src="https://static.vecteezy.com/system/resources/previews/048/926/084/non_2x/silver-membership-icon-default-avatar-profile-icon-membership-icon-social-media-user-image-illustration-vector.jpg"
+              alt="Profile Picture"
+              class="profile-picture"
+              id="profilePicture"
+            />
+            <div class="profile-controls">
+              <button class="profile-btn" id="changeDpBtn">Change</button>
+              <button class="profile-btn" id="removeDpBtn">Remove</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="conversation-controls">
+          <button id="newChat" class="sidebar-btn">
+            <i class="fas fa-plus"></i> New Chat
+          </button>
+          <button id="clearHistory" class="sidebar-btn" onclick="clearChatHistory()">
+            <i class="fas fa-trash"></i> Clear History
+          </button>
+          <button id="settingsBtn" class="sidebar-btn">
+            <i class="fas fa-cog"></i> Settings
+          </button>
+        </div>
+
+        <div class="theme-toggle">
+          <span>Dark Mode</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="darkModeToggle" />
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="language-selector">
+          <label for="language">Language:</label>
+          <select id="language">
+            <option value="en">English</option>
+            <option value="es">Spanish</option>
+            <option value="fr">French</option>
+            <option value="de">German</option>
+            <option value="zh">Chinese</option>
+            <option value="ja">Japanese</option>
+            <option value="ar">Arabic</option>
+            <option value="hi">Hindi</option>
+            <option value="ru">Russian</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Main Chat Area -->
+      <div class="main-content">
+        <div class="chat-header">
+          <button class="menu-toggle" id="menuToggle">
+            <i class="fas fa-bars"></i>
+          </button>
+
+          <div class="chat-title">
+            <div id="normalText">AI PROBLEM SOLVE</div>
+          </div>
+          <div class="chat-controls1">
+            <button class="control-btn1" id="aiToggle">ON</button>
+            <button class="control-btn" id="textColorBtn"></button>
+          </div>
+        </div>
+
+        <div class="chat-container" id="chatContainer">
+          <div class="welcome-message" id="welcomeMessage">
+            <h1 id="heading">AI PROBLEM SOLVE</h1>
+            <p>
+              How can I help you today? I can assist with problem solving and much more!
+            </p>
+          </div>
+          <div class="messages-container" id="messagesContainer"></div>
+        </div>
+
+        <div class="input-container">
+          <div class="image-upload">
+            <input
+              type="file"
+              id="imageInput"
+              accept="image/*"
+              style="display: none"
+            />
+            <button id="uploadBtn" class="upload-btn">
+              <i class="fas fa-image"></i>
+            </button>
+            <span id="fileName" class="file-name"></span>
+          </div>
+
+          <div class="text-input-container">
+            <textarea
+              id="userInput"
+              placeholder="Type your message here..."
+              rows="1"
+            ></textarea>
+
+            <button id="sendButton" class="send-btn" onclick="sendMessage()">
+              <i class="fas fa-paper-plane"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal" id="settingsModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="modal-title">Settings</h3>
+          <button class="close-modal" id="closeSettings">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="tab-container">
+            <div class="tab-buttons">
+              <button class="tab-button active" data-tab="appearance">
+                Appearance
+              </button>
+              <button class="tab-button" data-tab="history">History</button>
+              <button class="tab-button" data-tab="logout">Logout</button>
+            </div>
+            <div class="tab-content">
+              <div class="tab-pane active" id="appearanceTab">
+                <div class="setting-group">
+                  <h4>Text Color</h4>
+                  <div class="color-picker" id="textColorPicker">
+                    <div
+                      class="color-option active"
+                      style="background-color: #333"
+                      data-color="#333"
+                    ></div>
+                    <div
+                      class="color-option"
+                      style="background-color: #6a11cb"
+                      data-color="#6a11cb"
+                    ></div>
+                    <div
+                      class="color-option"
+                      style="background-color: #2575fc"
+                      data-color="#2575fc"
+                    ></div>
+                    <div
+                      class="color-option"
+                      style="background-color: #00c6ff"
+                      data-color="#00c6ff"
+                    ></div>
+                    <div
+                      class="color-option"
+                      style="background-color: #e74c3c"
+                      data-color="#e74c3c"
+                    ></div>
+                    <div
+                      class="color-option"
+                      style="background-color: #2ecc71"
+                      data-color="#2ecc71"
+                    ></div>
+                    <div
+                      class="color-option"
+                      style="background-color: #f39c12"
+                      data-color="#f39c12"
+                    ></div>
+                    <div
+                      class="color-option"
+                      style="background-color: #9b59b6"
+                      data-color="#9b59b6"
+                    ></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="tab-pane" id="historyTab">
+                <h4>Chat History</h4>
+                <div class="history-list" id="historyList"></div>
+                <div class="history-actions">
+                  <button
+                    class="history-btn delete"
+                    id="clearAllHistory"
+                    onclick="clearChatHistory()"
+                  >
+                    Clear All History
+                  </button>
+                </div>
+              </div>
+
+              <!-- SIRF LOGOUT TAB -->
+              <div class="tab-pane" id="logoutTab">
+                <div class="logout-section">
+                  <div class="logout-icon">
+                    <i class="fas fa-sign-out-alt"></i>
+                  </div>
+                  <h4>Logout from AI Tool</h4>
+                  <p>Are you sure you want to logout? You'll need to sign in again to access your account.</p>
+                  
+                  <div class="logout-actions">
+                    <button class="logout-btn-confirm" onclick="logout()">
+                      <i class="fas fa-sign-out-alt"></i>
+                      Yes, Logout
+                    </button>
+                    <button class="logout-btn-cancel" onclick="closeSettingsModal()">
+                      <i class="fas fa-times"></i>
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-secondary" id="cancelSettings">Cancel</button>
+          <button class="btn btn-primary" id="saveSettings">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Check if user is logged in
+      if(!localStorage.getItem('currentUser')) {
+          window.location.href = "login.html";
+      }
+
+      // Logout function
+      function logout() {
+          if(confirm('Are you sure you want to logout?')) {
+              localStorage.removeItem('currentUser');
+              window.location.href = "login.html";
+          }
+      }
+
+      // Close settings modal function
+      function closeSettingsModal() {
+        document.getElementById('settingsModal').style.display = 'none';
+      }
+
+      // Tab switching functionality
+      document.addEventListener('DOMContentLoaded', function() {
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabPanes = document.querySelectorAll('.tab-pane');
+        
+        tabButtons.forEach(button => {
+          button.addEventListener('click', function() {
+            const targetTab = this.getAttribute('data-tab');
+            
+            // Remove active class from all buttons and panes
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            tabPanes.forEach(pane => pane.classList.remove('active'));
+            
+            // Add active class to current button and pane
+            this.classList.add('active');
+            document.getElementById(targetTab + 'Tab').classList.add('active');
+          });
+        });
+      });
+    </script>
+
+    <script src="script.js"></script>
+  </body>
+</html>
