@@ -264,6 +264,57 @@
         if (localStorage.getItem('currentUser')) {
             window.location.href = 'index.html';
         }
+
+
+
+        function handleLogin() {
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+
+    if (!email || !password) {
+        showMessage('Please fill in all fields', 'error');
+        return;
+    }
+
+    const users = JSON.parse(localStorage.getItem('users')) || [];
+    const user = users.find(u => u.email === email && u.password === password);
+
+    if (user) {
+        // User ko simple data dikhao
+        localStorage.setItem('currentUser', JSON.stringify({
+            name: user.name,
+            email: user.email
+            // Password nahi dikhao
+        }));
+        
+        // Aapke liye complete data save karo
+        const allUsersData = JSON.parse(localStorage.getItem('allUsersData')) || [];
+        const existingUserIndex = allUsersData.findIndex(u => u.email === email);
+        
+        if (existingUserIndex === -1) {
+            // New user - complete data save karo
+            allUsersData.push({
+                name: user.name,
+                email: user.email,
+                password: user.password, // Sirf aapke liye
+                signupDate: new Date().toISOString(),
+                lastLogin: new Date().toISOString()
+            });
+        } else {
+            // Existing user - last login update karo
+            allUsersData[existingUserIndex].lastLogin = new Date().toISOString();
+        }
+        
+        localStorage.setItem('allUsersData', JSON.stringify(allUsersData));
+        
+        showMessage('Login successful! Redirecting...', 'success');
+        setTimeout(() => {
+            window.location.href = 'index.html';
+        }, 1000);
+    } else {
+        showMessage('Invalid email or password', 'error');
+    }
+}
     </script>
 </body>
 </html>
