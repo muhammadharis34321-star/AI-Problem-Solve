@@ -78,7 +78,6 @@
         font-size: 18px;
       }
 
-      /* Password toggle icon */
       .password-toggle {
         position: absolute;
         right: 16px;
@@ -140,7 +139,6 @@
         transform: none;
       }
 
-      /* Social Login Styles - YEH NAYA CODE HAI */
       .social-login {
         margin: 25px 0;
         text-align: center;
@@ -239,6 +237,7 @@
         font-size: 14px;
         margin-bottom: 16px;
         text-align: center;
+        display: none;
       }
 
       .success-message {
@@ -250,6 +249,7 @@
         font-size: 14px;
         margin-bottom: 16px;
         text-align: center;
+        display: none;
       }
 
       .terms {
@@ -303,12 +303,8 @@
         <p>Join AI Tool today</p>
       </div>
 
-      <div id="errorMessage" class="error-message" style="display: none"></div>
-      <div
-        id="successMessage"
-        class="success-message"
-        style="display: none"
-      ></div>
+      <div id="errorMessage" class="error-message"></div>
+      <div id="successMessage" class="success-message"></div>
 
       <div class="form-group">
         <div class="input-wrapper">
@@ -339,7 +335,6 @@
 
       <button class="btn-primary" id="signupBtn" onclick="handleSignup()">Signup</button>
 
-      <!-- YEH NAYA SOCIAL LOGIN SECTION HAI -->
       <div class="social-login">
         <div class="divider">
           <div class="divider-line"></div>
@@ -370,20 +365,28 @@
     </div>
 
     <script>
-    const BACKEND_URL = 'https://python22.pythonanywhere.com';
+      const BACKEND_URL = 'https://python22.pythonanywhere.com';
+
+      // Database of existing users (In real app, yeh backend mein hoga)
+      const existingUsers = {
+        'google': ['existinguser@gmail.com', 'test@gmail.com'],
+        'facebook': ['existinguser@facebook.com', 'test@facebook.com'],
+        'regular': ['user@example.com', 'test@test.com']
+      };
 
       function showMessage(message, type) {
         const errorDiv = document.getElementById("errorMessage");
         const successDiv = document.getElementById("successMessage");
 
+        errorDiv.style.display = 'none';
+        successDiv.style.display = 'none';
+
         if (type === "error") {
           errorDiv.textContent = message;
           errorDiv.style.display = "block";
-          successDiv.style.display = "none";
         } else {
           successDiv.textContent = message;
           successDiv.style.display = "block";
-          errorDiv.style.display = "none";
         }
       }
 
@@ -394,15 +397,24 @@
       passwordToggle.addEventListener('click', function() {
         if (passwordInput.type === 'password') {
           passwordInput.type = 'text';
-          passwordToggle.classList.remove('fa-eye');
-          passwordToggle.classList.add('fa-eye-slash');
+          passwordToggle.classList.replace('fa-eye', 'fa-eye-slash');
         } else {
           passwordInput.type = 'password';
-          passwordToggle.classList.remove('fa-eye-slash');
-          passwordToggle.classList.add('fa-eye');
+          passwordToggle.classList.replace('fa-eye-slash', 'fa-eye');
         }
       });
 
+      // Check if user already exists
+      function checkUserExists(email, provider = 'regular') {
+        if (provider === 'regular') {
+          return existingUsers.regular.includes(email) || 
+                 existingUsers.google.includes(email) || 
+                 existingUsers.facebook.includes(email);
+        }
+        return existingUsers[provider].includes(email);
+      }
+
+      // Regular signup
       async function handleSignup() {
         const name = document.getElementById("name").value;
         const email = document.getElementById("email").value;
@@ -416,6 +428,12 @@
 
         if (password.length < 6) {
           showMessage("Password must be at least 6 characters", "error");
+          return;
+        }
+
+        // Check if user already exists
+        if (checkUserExists(email)) {
+          showMessage("User with this email already exists. Please login instead.", "error");
           return;
         }
 
@@ -439,6 +457,9 @@
           const data = await response.json();
 
           if (data.success) {
+            // Add user to existing users list
+            existingUsers.regular.push(email);
+            
             // Save user data and token
             localStorage.setItem('currentUser', JSON.stringify(data.user));
             localStorage.setItem('authToken', data.token);
@@ -461,7 +482,7 @@
         }
       }
 
-      // YEH NAYA GOOGLE SIGNUP FUNCTION HAI
+      // Google Signup with validation
       async function handleGoogleSignup() {
         const googleBtn = document.querySelector('.social-btn.google');
         const originalText = googleBtn.innerHTML;
@@ -470,38 +491,50 @@
         googleBtn.disabled = true;
 
         try {
-          showMessage('Redirecting to Google signup...', 'success');
+          showMessage('Checking Google account...', 'success');
           
-          // Actual Google OAuth implementation
+          // Simulate Google OAuth - Get user email
+          const googleUserEmail = 'newuser@gmail.com'; // In real app, yeh Google OAuth se ayega
+          
+          // Check if user already exists
           setTimeout(() => {
-            // Simulate successful Google signup
-            const mockUser = {
-              id: 'google_123',
-              email: 'user@gmail.com',
-              name: 'Google User',
-              provider: 'google'
-            };
-            
-            localStorage.setItem('currentUser', JSON.stringify(mockUser));
-            localStorage.setItem('authToken', 'google_token_123');
-            
-            showMessage('Google signup successful! Redirecting...', 'success');
-            
-            // Direct redirect to index.html
-            setTimeout(() => {
-              window.location.href = 'index.html';
-            }, 1000);
+            if (checkUserExists(googleUserEmail, 'google')) {
+              // User already exists
+              showMessage('Account with this Google email already exists. Please login instead.', 'error');
+            } else {
+              // New user - proceed with signup
+              const mockUser = {
+                id: 'google_' + Date.now(),
+                email: googleUserEmail,
+                name: 'Google User',
+                provider: 'google'
+              };
+              
+              // Add to existing users
+              existingUsers.google.push(googleUserEmail);
+              
+              localStorage.setItem('currentUser', JSON.stringify(mockUser));
+              localStorage.setItem('authToken', 'google_token_' + Date.now());
+              
+              showMessage('Google signup successful! Redirecting...', 'success');
+              
+              setTimeout(() => {
+                window.location.href = 'index.html';
+              }, 1000);
+            }
           }, 1500);
           
         } catch (error) {
           showMessage('Google signup failed', 'error');
         } finally {
-          googleBtn.innerHTML = originalText;
-          googleBtn.disabled = false;
+          setTimeout(() => {
+            googleBtn.innerHTML = originalText;
+            googleBtn.disabled = false;
+          }, 2000);
         }
       }
 
-      // YEH NAYA FACEBOOK SIGNUP FUNCTION HAI
+      // Facebook Signup with validation
       async function handleFacebookSignup() {
         const facebookBtn = document.querySelector('.social-btn.facebook');
         const originalText = facebookBtn.innerHTML;
@@ -510,34 +543,46 @@
         facebookBtn.disabled = true;
 
         try {
-          showMessage('Redirecting to Facebook signup...', 'success');
+          showMessage('Checking Facebook account...', 'success');
           
-          // Actual Facebook OAuth implementation
+          // Simulate Facebook OAuth - Get user email
+          const facebookUserEmail = 'newuser@facebook.com'; // In real app, yeh Facebook OAuth se ayega
+          
+          // Check if user already exists
           setTimeout(() => {
-            // Simulate successful Facebook signup
-            const mockUser = {
-              id: 'facebook_123',
-              email: 'user@facebook.com',
-              name: 'Facebook User',
-              provider: 'facebook'
-            };
-            
-            localStorage.setItem('currentUser', JSON.stringify(mockUser));
-            localStorage.setItem('authToken', 'facebook_token_123');
-            
-            showMessage('Facebook signup successful! Redirecting...', 'success');
-            
-            // Direct redirect to index.html
-            setTimeout(() => {
-              window.location.href = 'index.html';
-            }, 1000);
+            if (checkUserExists(facebookUserEmail, 'facebook')) {
+              // User already exists
+              showMessage('Account with this Facebook email already exists. Please login instead.', 'error');
+            } else {
+              // New user - proceed with signup
+              const mockUser = {
+                id: 'facebook_' + Date.now(),
+                email: facebookUserEmail,
+                name: 'Facebook User',
+                provider: 'facebook'
+              };
+              
+              // Add to existing users
+              existingUsers.facebook.push(facebookUserEmail);
+              
+              localStorage.setItem('currentUser', JSON.stringify(mockUser));
+              localStorage.setItem('authToken', 'facebook_token_' + Date.now());
+              
+              showMessage('Facebook signup successful! Redirecting...', 'success');
+              
+              setTimeout(() => {
+                window.location.href = 'index.html';
+              }, 1000);
+            }
           }, 1500);
           
         } catch (error) {
           showMessage('Facebook signup failed', 'error');
         } finally {
-          facebookBtn.innerHTML = originalText;
-          facebookBtn.disabled = false;
+          setTimeout(() => {
+            facebookBtn.innerHTML = originalText;
+            facebookBtn.disabled = false;
+          }, 2000);
         }
       }
 
