@@ -9,6 +9,7 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
     <style>
+      /* Same CSS as before */
       * {
         margin: 0;
         padding: 0;
@@ -367,13 +368,6 @@
     <script>
       const BACKEND_URL = 'https://python22.pythonanywhere.com';
 
-      // Database of existing users (In real app, yeh backend mein hoga)
-      const existingUsers = {
-        'google': ['existinguser@gmail.com', 'test@gmail.com'],
-        'facebook': ['existinguser@facebook.com', 'test@facebook.com'],
-        'regular': ['user@example.com', 'test@test.com']
-      };
-
       function showMessage(message, type) {
         const errorDiv = document.getElementById("errorMessage");
         const successDiv = document.getElementById("successMessage");
@@ -404,14 +398,23 @@
         }
       });
 
-      // Check if user already exists
-      function checkUserExists(email, provider = 'regular') {
-        if (provider === 'regular') {
-          return existingUsers.regular.includes(email) || 
-                 existingUsers.google.includes(email) || 
-                 existingUsers.facebook.includes(email);
+      // Check if user already exists - Backend API call
+      async function checkUserExists(email) {
+        try {
+          const response = await fetch(`${BACKEND_URL}/api/check-user`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email })
+          });
+
+          const data = await response.json();
+          return data.exists;
+        } catch (error) {
+          console.error('Error checking user:', error);
+          return false;
         }
-        return existingUsers[provider].includes(email);
       }
 
       // Regular signup
@@ -432,7 +435,8 @@
         }
 
         // Check if user already exists
-        if (checkUserExists(email)) {
+        const userExists = await checkUserExists(email);
+        if (userExists) {
           showMessage("User with this email already exists. Please login instead.", "error");
           return;
         }
@@ -457,9 +461,6 @@
           const data = await response.json();
 
           if (data.success) {
-            // Add user to existing users list
-            existingUsers.regular.push(email);
-            
             // Save user data and token
             localStorage.setItem('currentUser', JSON.stringify(data.user));
             localStorage.setItem('authToken', data.token);
@@ -493,44 +494,54 @@
         try {
           showMessage('Checking Google account...', 'success');
           
-          // Simulate Google OAuth - Get user email
-          const googleUserEmail = 'newuser@gmail.com'; // In real app, yeh Google OAuth se ayega
+          // In real implementation, use Google OAuth API
+          const googleUserEmail = await getGoogleUserEmail();
           
+          if (!googleUserEmail) {
+            showMessage('Failed to get Google account information', 'error');
+            return;
+          }
+
           // Check if user already exists
-          setTimeout(() => {
-            if (checkUserExists(googleUserEmail, 'google')) {
-              // User already exists
-              showMessage('Account with this Google email already exists. Please login instead.', 'error');
-            } else {
-              // New user - proceed with signup
-              const mockUser = {
-                id: 'google_' + Date.now(),
+          const userExists = await checkUserExists(googleUserEmail);
+          
+          if (userExists) {
+            // User already exists
+            showMessage('Account with this Google email already exists. Please login instead.', 'error');
+          } else {
+            // New user - proceed with signup
+            const response = await fetch(`${BACKEND_URL}/api/social-signup`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
                 email: googleUserEmail,
-                name: 'Google User',
                 provider: 'google'
-              };
-              
-              // Add to existing users
-              existingUsers.google.push(googleUserEmail);
-              
-              localStorage.setItem('currentUser', JSON.stringify(mockUser));
-              localStorage.setItem('authToken', 'google_token_' + Date.now());
+              })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+              localStorage.setItem('currentUser', JSON.stringify(data.user));
+              localStorage.setItem('authToken', data.token);
               
               showMessage('Google signup successful! Redirecting...', 'success');
               
               setTimeout(() => {
                 window.location.href = 'index.html';
               }, 1000);
+            } else {
+              showMessage(data.error || 'Google signup failed', 'error');
             }
-          }, 1500);
+          }
           
         } catch (error) {
           showMessage('Google signup failed', 'error');
         } finally {
-          setTimeout(() => {
-            googleBtn.innerHTML = originalText;
-            googleBtn.disabled = false;
-          }, 2000);
+          googleBtn.innerHTML = originalText;
+          googleBtn.disabled = false;
         }
       }
 
@@ -545,45 +556,78 @@
         try {
           showMessage('Checking Facebook account...', 'success');
           
-          // Simulate Facebook OAuth - Get user email
-          const facebookUserEmail = 'newuser@facebook.com'; // In real app, yeh Facebook OAuth se ayega
+          // In real implementation, use Facebook OAuth API
+          const facebookUserEmail = await getFacebookUserEmail();
           
+          if (!facebookUserEmail) {
+            showMessage('Failed to get Facebook account information', 'error');
+            return;
+          }
+
           // Check if user already exists
-          setTimeout(() => {
-            if (checkUserExists(facebookUserEmail, 'facebook')) {
-              // User already exists
-              showMessage('Account with this Facebook email already exists. Please login instead.', 'error');
-            } else {
-              // New user - proceed with signup
-              const mockUser = {
-                id: 'facebook_' + Date.now(),
+          const userExists = await checkUserExists(facebookUserEmail);
+          
+          if (userExists) {
+            // User already exists
+            showMessage('Account with this Facebook email already exists. Please login instead.', 'error');
+          } else {
+            // New user - proceed with signup
+            const response = await fetch(`${BACKEND_URL}/api/social-signup`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
                 email: facebookUserEmail,
-                name: 'Facebook User',
                 provider: 'facebook'
-              };
-              
-              // Add to existing users
-              existingUsers.facebook.push(facebookUserEmail);
-              
-              localStorage.setItem('currentUser', JSON.stringify(mockUser));
-              localStorage.setItem('authToken', 'facebook_token_' + Date.now());
+              })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+              localStorage.setItem('currentUser', JSON.stringify(data.user));
+              localStorage.setItem('authToken', data.token);
               
               showMessage('Facebook signup successful! Redirecting...', 'success');
               
               setTimeout(() => {
                 window.location.href = 'index.html';
               }, 1000);
+            } else {
+              showMessage(data.error || 'Facebook signup failed', 'error');
             }
-          }, 1500);
+          }
           
         } catch (error) {
           showMessage('Facebook signup failed', 'error');
         } finally {
-          setTimeout(() => {
-            facebookBtn.innerHTML = originalText;
-            facebookBtn.disabled = false;
-          }, 2000);
+          facebookBtn.innerHTML = originalText;
+          facebookBtn.disabled = false;
         }
+      }
+
+      // Simulated OAuth functions (Replace with actual OAuth implementation)
+      async function getGoogleUserEmail() {
+        // In real app, implement Google OAuth flow
+        // This is just a simulation
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            // For demo, let's assume we get this email from Google
+            resolve('newuser@gmail.com');
+          }, 1000);
+        });
+      }
+
+      async function getFacebookUserEmail() {
+        // In real app, implement Facebook OAuth flow
+        // This is just a simulation
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            // For demo, let's assume we get this email from Facebook
+            resolve('newuser@facebook.com');
+          }, 1000);
+        });
       }
 
       // Enter key support
