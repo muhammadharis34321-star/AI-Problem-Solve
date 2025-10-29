@@ -354,6 +354,12 @@
     <script>
         const BACKEND_URL = 'https://python22.pythonanywhere.com';
 
+        // Database of registered social users (In real app, yeh backend mein hoga)
+        const registeredSocialUsers = {
+            'google': ['user1@gmail.com', 'user2@gmail.com', 'test@gmail.com'],
+            'facebook': ['user1@facebook.com', 'user2@facebook.com', 'test@facebook.com']
+        };
+
         function showMessage(message, type) {
             const errorDiv = document.getElementById('errorMessage');
             const successDiv = document.getElementById('successMessage');
@@ -383,6 +389,11 @@
                 passwordToggle.classList.replace('fa-eye-slash', 'fa-eye');
             }
         });
+
+        // Check if social user exists
+        function checkSocialUserExists(email, provider) {
+            return registeredSocialUsers[provider].includes(email);
+        }
 
         // Regular login
         async function handleLogin() {
@@ -425,78 +436,102 @@
             }
         }
 
-        // Google Login - DIRECT TO INDEX.HTML
-        function handleGoogleLogin() {
+        // Google Login with validation
+        async function handleGoogleLogin() {
             const googleBtn = document.querySelector('.social-btn.google');
             const originalText = googleBtn.innerHTML;
             
             googleBtn.innerHTML = '<div class="loading-spinner"></div> Connecting...';
             googleBtn.disabled = true;
 
-            showMessage('Connecting with Google...', 'success');
-            
-            // Simulate Google login - DIRECT REDIRECT
-            setTimeout(() => {
-                const mockUser = {
-                    id: 'google_' + Date.now(),
-                    email: 'user@gmail.com',
-                    name: 'Google User',
-                    provider: 'google'
-                };
+            try {
+                showMessage('Checking Google account...', 'success');
                 
-                localStorage.setItem('currentUser', JSON.stringify(mockUser));
-                localStorage.setItem('authToken', 'google_token_' + Date.now());
+                // Simulate Google OAuth - Get user email
+                const googleUserEmail = 'test@gmail.com'; // In real app, yeh Google OAuth se ayega
                 
-                showMessage('Google login successful! Redirecting...', 'success');
-                
-                // DIRECT REDIRECT TO INDEX.HTML
+                // Check if user exists in our system
                 setTimeout(() => {
-                    window.location.href = 'index.html';
-                }, 1000);
-                
-            }, 1500);
+                    if (checkSocialUserExists(googleUserEmail, 'google')) {
+                        // User exists - proceed with login
+                        const mockUser = {
+                            id: 'google_' + Date.now(),
+                            email: googleUserEmail,
+                            name: 'Google User',
+                            provider: 'google'
+                        };
+                        
+                        localStorage.setItem('currentUser', JSON.stringify(mockUser));
+                        localStorage.setItem('authToken', 'google_token_' + Date.now());
+                        
+                        showMessage('Google login successful! Redirecting...', 'success');
+                        
+                        setTimeout(() => {
+                            window.location.href = 'index.html';
+                        }, 1000);
+                    } else {
+                        // User doesn't exist
+                        showMessage('No account found with this Google account. Please sign up first.', 'error');
+                    }
+                }, 1500);
 
-            setTimeout(() => {
-                googleBtn.innerHTML = originalText;
-                googleBtn.disabled = false;
-            }, 2000);
+            } catch (error) {
+                showMessage('Google login failed', 'error');
+            } finally {
+                setTimeout(() => {
+                    googleBtn.innerHTML = originalText;
+                    googleBtn.disabled = false;
+                }, 2000);
+            }
         }
 
-        // Facebook Login - DIRECT TO INDEX.HTML  
-        function handleFacebookLogin() {
+        // Facebook Login with validation
+        async function handleFacebookLogin() {
             const facebookBtn = document.querySelector('.social-btn.facebook');
             const originalText = facebookBtn.innerHTML;
             
             facebookBtn.innerHTML = '<div class="loading-spinner"></div> Connecting...';
             facebookBtn.disabled = true;
 
-            showMessage('Connecting with Facebook...', 'success');
-            
-            // Simulate Facebook login - DIRECT REDIRECT
-            setTimeout(() => {
-                const mockUser = {
-                    id: 'facebook_' + Date.now(),
-                    email: 'user@facebook.com',
-                    name: 'Facebook User',
-                    provider: 'facebook'
-                };
+            try {
+                showMessage('Checking Facebook account...', 'success');
                 
-                localStorage.setItem('currentUser', JSON.stringify(mockUser));
-                localStorage.setItem('authToken', 'facebook_token_' + Date.now());
+                // Simulate Facebook OAuth - Get user email
+                const facebookUserEmail = 'test@facebook.com'; // In real app, yeh Facebook OAuth se ayega
                 
-                showMessage('Facebook login successful! Redirecting...', 'success');
-                
-                // DIRECT REDIRECT TO INDEX.HTML
+                // Check if user exists in our system
                 setTimeout(() => {
-                    window.location.href = 'index.html';
-                }, 1000);
-                
-            }, 1500);
+                    if (checkSocialUserExists(facebookUserEmail, 'facebook')) {
+                        // User exists - proceed with login
+                        const mockUser = {
+                            id: 'facebook_' + Date.now(),
+                            email: facebookUserEmail,
+                            name: 'Facebook User',
+                            provider: 'facebook'
+                        };
+                        
+                        localStorage.setItem('currentUser', JSON.stringify(mockUser));
+                        localStorage.setItem('authToken', 'facebook_token_' + Date.now());
+                        
+                        showMessage('Facebook login successful! Redirecting...', 'success');
+                        
+                        setTimeout(() => {
+                            window.location.href = 'index.html';
+                        }, 1000);
+                    } else {
+                        // User doesn't exist
+                        showMessage('No account found with this Facebook account. Please sign up first.', 'error');
+                    }
+                }, 1500);
 
-            setTimeout(() => {
-                facebookBtn.innerHTML = originalText;
-                facebookBtn.disabled = false;
-            }, 2000);
+            } catch (error) {
+                showMessage('Facebook login failed', 'error');
+            } finally {
+                setTimeout(() => {
+                    facebookBtn.innerHTML = originalText;
+                    facebookBtn.disabled = false;
+                }, 2000);
+            }
         }
 
         // Enter key support
