@@ -6,6 +6,7 @@
     <title>Login | AI Tool</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        /* Same CSS as before */
         * {
             margin: 0;
             padding: 0;
@@ -354,12 +355,6 @@
     <script>
         const BACKEND_URL = 'https://python22.pythonanywhere.com';
 
-        // Database of registered social users (In real app, yeh backend mein hoga)
-        const registeredSocialUsers = {
-            'google': ['user1@gmail.com', 'user2@gmail.com', 'test@gmail.com'],
-            'facebook': ['user1@facebook.com', 'user2@facebook.com', 'test@facebook.com']
-        };
-
         function showMessage(message, type) {
             const errorDiv = document.getElementById('errorMessage');
             const successDiv = document.getElementById('successMessage');
@@ -390,9 +385,23 @@
             }
         });
 
-        // Check if social user exists
-        function checkSocialUserExists(email, provider) {
-            return registeredSocialUsers[provider].includes(email);
+        // Check if social user exists - Backend API call
+        async function checkSocialUserExists(email, provider) {
+            try {
+                const response = await fetch(`${BACKEND_URL}/api/check-social-user`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email, provider })
+                });
+
+                const data = await response.json();
+                return data.exists;
+            } catch (error) {
+                console.error('Error checking social user:', error);
+                return false;
+            }
         }
 
         // Regular login
@@ -447,22 +456,36 @@
             try {
                 showMessage('Checking Google account...', 'success');
                 
-                // Simulate Google OAuth - Get user email
-                const googleUserEmail = 'test@gmail.com'; // In real app, yeh Google OAuth se ayega
+                // In real implementation, use Google OAuth API
+                // For demo, we'll simulate getting user info
+                const googleUserEmail = await getGoogleUserEmail();
                 
+                if (!googleUserEmail) {
+                    showMessage('Failed to get Google account information', 'error');
+                    return;
+                }
+
                 // Check if user exists in our system
-                setTimeout(() => {
-                    if (checkSocialUserExists(googleUserEmail, 'google')) {
-                        // User exists - proceed with login
-                        const mockUser = {
-                            id: 'google_' + Date.now(),
+                const userExists = await checkSocialUserExists(googleUserEmail, 'google');
+                
+                if (userExists) {
+                    // User exists - proceed with login
+                    const response = await fetch(`${BACKEND_URL}/api/social-login`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
                             email: googleUserEmail,
-                            name: 'Google User',
                             provider: 'google'
-                        };
-                        
-                        localStorage.setItem('currentUser', JSON.stringify(mockUser));
-                        localStorage.setItem('authToken', 'google_token_' + Date.now());
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        localStorage.setItem('currentUser', JSON.stringify(data.user));
+                        localStorage.setItem('authToken', data.token);
                         
                         showMessage('Google login successful! Redirecting...', 'success');
                         
@@ -470,18 +493,18 @@
                             window.location.href = 'index.html';
                         }, 1000);
                     } else {
-                        // User doesn't exist
-                        showMessage('No account found with this Google account. Please sign up first.', 'error');
+                        showMessage(data.error || 'Google login failed', 'error');
                     }
-                }, 1500);
+                } else {
+                    // User doesn't exist
+                    showMessage('No account found with this Google account. Please sign up first.', 'error');
+                }
 
             } catch (error) {
-                showMessage('Google login failed', 'error');
+                showMessage('Google login failed. Please try again.', 'error');
             } finally {
-                setTimeout(() => {
-                    googleBtn.innerHTML = originalText;
-                    googleBtn.disabled = false;
-                }, 2000);
+                googleBtn.innerHTML = originalText;
+                googleBtn.disabled = false;
             }
         }
 
@@ -496,22 +519,36 @@
             try {
                 showMessage('Checking Facebook account...', 'success');
                 
-                // Simulate Facebook OAuth - Get user email
-                const facebookUserEmail = 'test@facebook.com'; // In real app, yeh Facebook OAuth se ayega
+                // In real implementation, use Facebook OAuth API
+                // For demo, we'll simulate getting user info
+                const facebookUserEmail = await getFacebookUserEmail();
                 
+                if (!facebookUserEmail) {
+                    showMessage('Failed to get Facebook account information', 'error');
+                    return;
+                }
+
                 // Check if user exists in our system
-                setTimeout(() => {
-                    if (checkSocialUserExists(facebookUserEmail, 'facebook')) {
-                        // User exists - proceed with login
-                        const mockUser = {
-                            id: 'facebook_' + Date.now(),
+                const userExists = await checkSocialUserExists(facebookUserEmail, 'facebook');
+                
+                if (userExists) {
+                    // User exists - proceed with login
+                    const response = await fetch(`${BACKEND_URL}/api/social-login`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
                             email: facebookUserEmail,
-                            name: 'Facebook User',
                             provider: 'facebook'
-                        };
-                        
-                        localStorage.setItem('currentUser', JSON.stringify(mockUser));
-                        localStorage.setItem('authToken', 'facebook_token_' + Date.now());
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        localStorage.setItem('currentUser', JSON.stringify(data.user));
+                        localStorage.setItem('authToken', data.token);
                         
                         showMessage('Facebook login successful! Redirecting...', 'success');
                         
@@ -519,19 +556,42 @@
                             window.location.href = 'index.html';
                         }, 1000);
                     } else {
-                        // User doesn't exist
-                        showMessage('No account found with this Facebook account. Please sign up first.', 'error');
+                        showMessage(data.error || 'Facebook login failed', 'error');
                     }
-                }, 1500);
+                } else {
+                    // User doesn't exist
+                    showMessage('No account found with this Facebook account. Please sign up first.', 'error');
+                }
 
             } catch (error) {
-                showMessage('Facebook login failed', 'error');
+                showMessage('Facebook login failed. Please try again.', 'error');
             } finally {
-                setTimeout(() => {
-                    facebookBtn.innerHTML = originalText;
-                    facebookBtn.disabled = false;
-                }, 2000);
+                facebookBtn.innerHTML = originalText;
+                facebookBtn.disabled = false;
             }
+        }
+
+        // Simulated OAuth functions (Replace with actual OAuth implementation)
+        async function getGoogleUserEmail() {
+            // In real app, implement Google OAuth flow
+            // This is just a simulation
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    // For demo, let's assume we get this email from Google
+                    resolve('test@gmail.com');
+                }, 1000);
+            });
+        }
+
+        async function getFacebookUserEmail() {
+            // In real app, implement Facebook OAuth flow
+            // This is just a simulation
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    // For demo, let's assume we get this email from Facebook
+                    resolve('test@facebook.com');
+                }, 1000);
+            });
         }
 
         // Enter key support
