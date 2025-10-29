@@ -75,7 +75,6 @@
             font-size: 18px;
         }
 
-        /* Password toggle icon */
         .password-toggle {
             position: absolute;
             right: 16px;
@@ -137,6 +136,79 @@
             transform: none;
         }
 
+        .social-login {
+            margin: 25px 0;
+            text-align: center;
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 20px 0;
+        }
+
+        .divider-line {
+            flex: 1;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .divider-text {
+            padding: 0 15px;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 14px;
+        }
+
+        .social-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .social-btn {
+            flex: 1;
+            padding: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.08);
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .social-btn:hover {
+            background: rgba(255, 255, 255, 0.12);
+            transform: translateY(-1px);
+        }
+
+        .social-btn.google {
+            border-color: rgba(219, 68, 55, 0.4);
+        }
+
+        .social-btn.google:hover {
+            background: rgba(219, 68, 55, 0.1);
+            border-color: rgba(219, 68, 55, 0.6);
+        }
+
+        .social-btn.facebook {
+            border-color: rgba(59, 89, 152, 0.4);
+        }
+
+        .social-btn.facebook:hover {
+            background: rgba(59, 89, 152, 0.1);
+            border-color: rgba(59, 89, 152, 0.6);
+        }
+
+        .social-btn i {
+            font-size: 16px;
+        }
+
         .footer-links {
             text-align: center;
             margin-top: 25px;
@@ -162,6 +234,7 @@
             font-size: 14px;
             margin-bottom: 16px;
             text-align: center;
+            display: none;
         }
 
         .success-message {
@@ -173,6 +246,7 @@
             font-size: 14px;
             margin-bottom: 16px;
             text-align: center;
+            display: none;
         }
 
         .forgot-password {
@@ -212,6 +286,10 @@
                 padding: 40px 24px;
                 margin: 20px;
             }
+            
+            .social-buttons {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
@@ -223,8 +301,8 @@
             <p>Login to your AI Tool account</p>
         </div>
 
-        <div id="errorMessage" class="error-message" style="display: none;"></div>
-        <div id="successMessage" class="success-message" style="display: none;"></div>
+        <div id="errorMessage" class="error-message"></div>
+        <div id="successMessage" class="success-message"></div>
 
         <div class="form-group">
             <div class="input-wrapper">
@@ -249,46 +327,64 @@
             Login
         </button>
 
+        <div class="social-login">
+            <div class="divider">
+                <div class="divider-line"></div>
+                <div class="divider-text">OR</div>
+                <div class="divider-line"></div>
+            </div>
+            
+            <div class="social-buttons">
+                <button class="social-btn google" onclick="handleGoogleLogin()">
+                    <i class="fab fa-google"></i>
+                    Google
+                </button>
+                <button class="social-btn facebook" onclick="handleFacebookLogin()">
+                    <i class="fab fa-facebook-f"></i>
+                    Facebook
+                </button>
+            </div>
+        </div>
+
         <div class="footer-links">
             <a href="signup.html">Don't have an account? Signup</a>
         </div>
     </div>
 
     <script>
-      const BACKEND_URL = 'https://python22.pythonanywhere.com';
- // Change to your PythonAnywhere URL
+        const BACKEND_URL = 'https://python22.pythonanywhere.com';
 
         function showMessage(message, type) {
             const errorDiv = document.getElementById('errorMessage');
             const successDiv = document.getElementById('successMessage');
             
+            errorDiv.style.display = 'none';
+            successDiv.style.display = 'none';
+            
             if (type === 'error') {
                 errorDiv.textContent = message;
                 errorDiv.style.display = 'block';
-                successDiv.style.display = 'none';
             } else {
                 successDiv.textContent = message;
                 successDiv.style.display = 'block';
-                errorDiv.style.display = 'none';
             }
         }
 
-        // Password show/hide functionality
+        // Password show/hide
         const passwordToggle = document.getElementById('passwordToggle');
         const passwordInput = document.getElementById('password');
 
         passwordToggle.addEventListener('click', function() {
             if (passwordInput.type === 'password') {
                 passwordInput.type = 'text';
-                passwordToggle.classList.remove('fa-eye');
-                passwordToggle.classList.add('fa-eye-slash');
+                passwordToggle.classList.replace('fa-eye', 'fa-eye-slash');
             } else {
                 passwordInput.type = 'password';
-                passwordToggle.classList.remove('fa-eye-slash');
-                passwordToggle.classList.add('fa-eye');
+                passwordToggle.classList.replace('fa-eye-slash', 'fa-eye');
             }
         });
 
+        // Regular login
         async function handleLogin() {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
@@ -299,7 +395,6 @@
                 return;
             }
 
-            // Show loading state
             loginBtn.innerHTML = '<div class="loading-spinner"></div> Logging in...';
             loginBtn.disabled = true;
 
@@ -309,35 +404,99 @@
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({
-                        email: email,
-                        password: password
-                    })
+                    body: JSON.stringify({ email, password })
                 });
 
                 const data = await response.json();
 
                 if (data.success) {
-                    // Save user data and token
                     localStorage.setItem('currentUser', JSON.stringify(data.user));
                     localStorage.setItem('authToken', data.token);
-                    
                     showMessage('Login successful! Redirecting...', 'success');
-                    
-                    setTimeout(() => {
-                        window.location.href = 'index.html';
-                    }, 1000);
+                    setTimeout(() => window.location.href = 'index.html', 1000);
                 } else {
                     showMessage(data.error || 'Login failed', 'error');
                 }
             } catch (error) {
-                console.error('Login error:', error);
                 showMessage('Network error. Please try again.', 'error');
             } finally {
-                // Reset button state
                 loginBtn.innerHTML = 'Login';
                 loginBtn.disabled = false;
             }
+        }
+
+        // Google Login - DIRECT TO INDEX.HTML
+        function handleGoogleLogin() {
+            const googleBtn = document.querySelector('.social-btn.google');
+            const originalText = googleBtn.innerHTML;
+            
+            googleBtn.innerHTML = '<div class="loading-spinner"></div> Connecting...';
+            googleBtn.disabled = true;
+
+            showMessage('Connecting with Google...', 'success');
+            
+            // Simulate Google login - DIRECT REDIRECT
+            setTimeout(() => {
+                const mockUser = {
+                    id: 'google_' + Date.now(),
+                    email: 'user@gmail.com',
+                    name: 'Google User',
+                    provider: 'google'
+                };
+                
+                localStorage.setItem('currentUser', JSON.stringify(mockUser));
+                localStorage.setItem('authToken', 'google_token_' + Date.now());
+                
+                showMessage('Google login successful! Redirecting...', 'success');
+                
+                // DIRECT REDIRECT TO INDEX.HTML
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 1000);
+                
+            }, 1500);
+
+            setTimeout(() => {
+                googleBtn.innerHTML = originalText;
+                googleBtn.disabled = false;
+            }, 2000);
+        }
+
+        // Facebook Login - DIRECT TO INDEX.HTML  
+        function handleFacebookLogin() {
+            const facebookBtn = document.querySelector('.social-btn.facebook');
+            const originalText = facebookBtn.innerHTML;
+            
+            facebookBtn.innerHTML = '<div class="loading-spinner"></div> Connecting...';
+            facebookBtn.disabled = true;
+
+            showMessage('Connecting with Facebook...', 'success');
+            
+            // Simulate Facebook login - DIRECT REDIRECT
+            setTimeout(() => {
+                const mockUser = {
+                    id: 'facebook_' + Date.now(),
+                    email: 'user@facebook.com',
+                    name: 'Facebook User',
+                    provider: 'facebook'
+                };
+                
+                localStorage.setItem('currentUser', JSON.stringify(mockUser));
+                localStorage.setItem('authToken', 'facebook_token_' + Date.now());
+                
+                showMessage('Facebook login successful! Redirecting...', 'success');
+                
+                // DIRECT REDIRECT TO INDEX.HTML
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 1000);
+                
+            }, 1500);
+
+            setTimeout(() => {
+                facebookBtn.innerHTML = originalText;
+                facebookBtn.disabled = false;
+            }, 2000);
         }
 
         // Enter key support
@@ -345,7 +504,7 @@
             if (e.key === 'Enter') handleLogin();
         });
 
-        // Check if already logged in
+        // Auto redirect if already logged in
         if (localStorage.getItem('currentUser')) {
             window.location.href = 'index.html';
         }
