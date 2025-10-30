@@ -230,18 +230,21 @@
       </div>
     </div>
 
-    <script>
-
-  // Check if user is logged in
+    
+<script>
+  // TEMPORARY FIX - Login check comment karo
+  /*
   if(!localStorage.getItem('currentUser')) {
       window.location.href = "login.html";
   }
+  */
 
   // Logout function
   function logout() {
       if(confirm('Are you sure you want to logout?')) {
           localStorage.removeItem('currentUser');
-          window.location.href = "login.html";
+          // window.location.href = "login.html"; // Temporarily comment this too
+          alert('Logout successful!'); // Temporary success message
       }
   }
 
@@ -268,8 +271,29 @@
         document.getElementById(targetTab + 'Tab').classList.add('active');
       });
     });
+
+    // Modal functionality add karo
+    const settingsBtn = document.getElementById('settingsBtn');
+    const settingsModal = document.getElementById('settingsModal');
+    const closeSettings = document.getElementById('closeSettings');
+    const cancelSettings = document.getElementById('cancelSettings');
+
+    if(settingsBtn) {
+      settingsBtn.addEventListener('click', function() {
+        settingsModal.style.display = 'block';
+      });
+    }
+
+    if(closeSettings) {
+      closeSettings.addEventListener('click', closeSettingsModal);
+    }
+
+    if(cancelSettings) {
+      cancelSettings.addEventListener('click', closeSettingsModal);
+    }
   });
 </script>
+
 
 
     <script src="script.js"></script>
