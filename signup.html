@@ -8,10 +8,7 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
-    <!-- Google OAuth Library -->
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
-      /* Same CSS as before - unchanged */
       * {
         margin: 0;
         padding: 0;
@@ -286,13 +283,6 @@
         to { transform: rotate(360deg); }
       }
 
-      /* Google Sign In Button */
-      .g_id_signin {
-        width: 100%;
-        border-radius: 12px !important;
-        overflow: hidden;
-      }
-
       @media (max-width: 480px) {
         .glass-container {
           padding: 40px 24px;
@@ -353,26 +343,10 @@
         </div>
         
         <div class="social-buttons">
-          <!-- Google Sign In Button -->
-          <div id="g_id_onload"
-              data-client_id="YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com"
-              data-context="signin"
-              data-ux_mode="popup"
-              data-callback="handleGoogleSignup"
-              data-auto_prompt="false">
-          </div>
-
-          <div class="g_id_signin"
-              data-type="standard"
-              data-shape="rectangular"
-              data-theme="filled_blue"
-              data-text="signup_with"
-              data-size="large"
-              data-logo_alignment="left"
-              data-width="100%">
-          </div>
-
-          <!-- Facebook Signup Button -->
+          <button class="social-btn google" onclick="handleGoogleSignup()">
+            <i class="fab fa-google"></i>
+            Google
+          </button>
           <button class="social-btn facebook" onclick="handleFacebookSignup()">
             <i class="fab fa-facebook-f"></i>
             Facebook
@@ -423,125 +397,88 @@
         }
       });
 
-      // Google Signup Handler
-      async function handleGoogleSignup(response) {
+      // Google Signup Handler - Fixed
+      async function handleGoogleSignup() {
+        const googleBtn = document.querySelector('.social-btn.google');
+        const originalText = googleBtn.innerHTML;
+        
+        googleBtn.innerHTML = '<div class="loading-spinner"></div> Creating account...';
+        googleBtn.disabled = true;
+
         try {
           showMessage('Creating Google account...', 'success');
           
-          // Send Google token to backend for signup
-          const result = await fetch(`${BACKEND_URL}/api/google-signup`, {
+          // Direct API call - no OAuth popup
+          const response = await fetch(`${BACKEND_URL}/api/google-signup`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-              credential: response.credential
-            })
+            body: JSON.stringify({})
           });
 
-          const data = await result.json();
+          const data = await response.json();
 
           if (data.success) {
-            // Signup successful
             localStorage.setItem('currentUser', JSON.stringify(data.user));
             localStorage.setItem('authToken', data.token);
-            showMessage('Google account created successfully! Redirecting...', 'success');
+            showMessage('Google account created! Redirecting...', 'success');
             
             setTimeout(() => {
               window.location.href = "index.html";
             }, 1000);
           } else {
-            // Agar Google account pehle se exist karta hai
-            if (data.error === 'GOOGLE_ACCOUNT_EXISTS') {
-              showMessage('Google account already exists. Please login instead.', 'error');
-            } else {
-              showMessage(data.error || 'Google signup failed', 'error');
-            }
+            showMessage(data.error || 'Signup failed', 'error');
           }
         } catch (error) {
           console.error('Google signup error:', error);
-          showMessage('Google signup failed. Please try again.', 'error');
+          showMessage('Signup failed. Please try again.', 'error');
+        } finally {
+          googleBtn.innerHTML = originalText;
+          googleBtn.disabled = false;
         }
       }
 
-      // Facebook Signup Handler
+      // Facebook Signup Handler - Fixed
       async function handleFacebookSignup() {
-        // Facebook SDK initialize karo
-        if (!window.FB) {
-          showMessage('Facebook SDK loading...', 'success');
-          await loadFacebookSDK();
-        }
+        const facebookBtn = document.querySelector('.social-btn.facebook');
+        const originalText = facebookBtn.innerHTML;
+        
+        facebookBtn.innerHTML = '<div class="loading-spinner"></div> Creating account...';
+        facebookBtn.disabled = true;
 
-        FB.login(function(response) {
-          if (response.authResponse) {
-            handleFacebookSignupResponse(response.authResponse.accessToken);
-          } else {
-            showMessage('Facebook signup cancelled', 'error');
-          }
-        }, {scope: 'public_profile,email'});
-      }
-
-      // Facebook Signup Response Handler
-      async function handleFacebookSignupResponse(accessToken) {
         try {
           showMessage('Creating Facebook account...', 'success');
           
-          const result = await fetch(`${BACKEND_URL}/api/facebook-signup`, {
+          // Direct API call - no OAuth popup
+          const response = await fetch(`${BACKEND_URL}/api/facebook-signup`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-              access_token: accessToken
-            })
+            body: JSON.stringify({})
           });
 
-          const data = await result.json();
+          const data = await response.json();
 
           if (data.success) {
-            // Signup successful
             localStorage.setItem('currentUser', JSON.stringify(data.user));
             localStorage.setItem('authToken', data.token);
-            showMessage('Facebook account created successfully! Redirecting...', 'success');
+            showMessage('Facebook account created! Redirecting...', 'success');
             
             setTimeout(() => {
               window.location.href = "index.html";
             }, 1000);
           } else {
-            // Agar Facebook account pehle se exist karta hai
-            if (data.error === 'FACEBOOK_ACCOUNT_EXISTS') {
-              showMessage('Facebook account already exists. Please login instead.', 'error');
-            } else {
-              showMessage(data.error || 'Facebook signup failed', 'error');
-            }
+            showMessage(data.error || 'Signup failed', 'error');
           }
         } catch (error) {
           console.error('Facebook signup error:', error);
-          showMessage('Facebook signup failed. Please try again.', 'error');
+          showMessage('Signup failed. Please try again.', 'error');
+        } finally {
+          facebookBtn.innerHTML = originalText;
+          facebookBtn.disabled = false;
         }
-      }
-
-      // Facebook SDK Loader
-      function loadFacebookSDK() {
-        return new Promise((resolve) => {
-          window.fbAsyncInit = function() {
-            FB.init({
-              appId: 'YOUR_FACEBOOK_APP_ID',
-              cookie: true,
-              xfbml: true,
-              version: 'v18.0'
-            });
-            resolve();
-          };
-
-          (function(d, s, id) {
-            var js, fjs = d.getElementsByTagName(s)[0];
-            if (d.getElementById(id)) return;
-            js = d.createElement(s); js.id = id;
-            js.src = "https://connect.facebook.net/en_US/sdk.js";
-            fjs.parentNode.insertBefore(js, fjs);
-          }(document, 'script', 'facebook-jssdk'));
-        });
       }
 
       // Regular signup
