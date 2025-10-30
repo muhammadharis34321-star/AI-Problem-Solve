@@ -385,247 +385,257 @@
     </div>
 
     <script>
-        const BACKEND_URL = 'https://python22.pythonanywhere.com';
-        
-        function showAlert(message, type = 'error') {
-            const alert = document.getElementById('alert');
-            alert.textContent = message;
-            alert.className = `alert ${type}`;
-            alert.style.display = 'block';
-            
-            setTimeout(() => {
-                alert.style.display = 'none';
-            }, 5000);
-        }
+const BACKEND_URL = 'https://python22.pythonanywhere.com';
 
-        function setLoading(loading) {
-            const loginBtn = document.getElementById('loginBtn');
-            const loginText = document.getElementById('loginText');
-            const loginLoading = document.getElementById('loginLoading');
-            
-            if (loading) {
-                loginBtn.disabled = true;
-                loginText.style.display = 'none';
-                loginLoading.style.display = 'inline-block';
-            } else {
-                loginBtn.disabled = false;
-                loginText.style.display = 'inline-block';
-                loginLoading.style.display = 'none';
-            }
-        }
+// Check if user is already logged in - FIXED VERSION
+function checkAuth() {
+    const token = localStorage.getItem('token');
+    const user = localStorage.getItem('user');
+    const currentUser = localStorage.getItem('currentUser');
+    
+    // If user is logged in with ANY system, redirect to index.html
+    if ((token && user) || currentUser) {
+        window.location.href = 'index.html';
+    }
+}
 
-        // Regular login
-        document.getElementById('loginForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
+function showAlert(message, type = 'error') {
+    const alert = document.getElementById('alert');
+    alert.textContent = message;
+    alert.className = `alert ${type}`;
+    alert.style.display = 'block';
+    
+    setTimeout(() => {
+        alert.style.display = 'none';
+    }, 5000);
+}
 
-            if (!email || !password) {
-                showAlert('Please fill in all fields');
-                return;
-            }
+function setLoading(loading) {
+    const loginBtn = document.getElementById('loginBtn');
+    const loginText = document.getElementById('loginText');
+    const loginLoading = document.getElementById('loginLoading');
+    
+    if (loading) {
+        loginBtn.disabled = true;
+        loginText.style.display = 'none';
+        loginLoading.style.display = 'inline-block';
+    } else {
+        loginBtn.disabled = false;
+        loginText.style.display = 'inline-block';
+        loginLoading.style.display = 'none';
+    }
+}
 
-            setLoading(true);
+// Regular login - FIXED to work with both systems
+document.getElementById('loginForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
 
-            try {
-                const response = await fetch(`${BACKEND_URL}/api/login`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ email, password })
-                });
+    if (!email || !password) {
+        showAlert('Please fill in all fields');
+        return;
+    }
 
-                const data = await response.json();
+    setLoading(true);
 
-                if (data.success) {
-                    showAlert('Login successful!', 'success');
-                    
-                    localStorage.setItem('token', data.token);
-                    localStorage.setItem('user', JSON.stringify(data.user));
-                    
-                    setTimeout(() => {
-                        window.location.href = 'index.html';
-                    }, 1000);
-                } else {
-                    showAlert(data.error || 'Login failed');
-                }
-            } catch (error) {
-                showAlert('Network error. Please try again.');
-            } finally {
-                setLoading(false);
-            }
+    try {
+        const response = await fetch(`${BACKEND_URL}/api/login`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email, password })
         });
 
-        // Google Login with Account Selection
-        async function googleLogin() {
-            // Demo Google user data
-            const googleUser = {
-                email: 'demo@gmail.com',
-                name: 'Google User',
-                profile_pic: 'https://via.placeholder.com/80'
-            };
+        const data = await response.json();
+
+        if (data.success) {
+            showAlert('Login successful!', 'success');
             
-            setLoading(true);
-
-            try {
-                // First check if account exists
-                const authResponse = await fetch(`${BACKEND_URL}/api/google-auth`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(googleUser)
-                });
-
-                const authData = await authResponse.json();
-
-                if (authData.success) {
-                    if (authData.action === 'choose_account') {
-                        // Show account selection modal
-                        showAccountSelection(authData.accounts, googleUser);
-                    } else if (authData.action === 'create_account') {
-                        // Create new account
-                        await createGoogleAccount(googleUser);
-                    }
-                } else {
-                    showAlert(authData.error || 'Google login failed');
-                }
-            } catch (error) {
-                showAlert('Network error. Please try again.');
-            } finally {
-                setLoading(false);
-            }
-        }
-
-        // Show account selection modal
-        function showAccountSelection(accounts, googleUser) {
-            const modalHTML = `
-                <div class="account-modal">
-                    <div class="modal-content">
-                        <h3>Choose an Account</h3>
-                        <p>Found ${accounts.length} account(s) with this email</p>
-                        <div class="accounts-list">
-                            ${accounts.map(account => `
-                                <div class="account-item" onclick="selectAccount(${account.id})">
-                                    <img src="${account.profilePic}" alt="Profile">
-                                    <div>
-                                        <strong>${account.name}</strong>
-                                        <p>${account.email}</p>
-                                        <small>${account.provider} • Created: ${new Date(account.created_at).toLocaleDateString()}</small>
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
-                        <button onclick="createNewAccount(${JSON.stringify(googleUser).replace(/"/g, '&quot;')})" class="create-new-btn">
-                            Create New Account
-                        </button>
-                    </div>
-                </div>
-            `;
+            // Save in BOTH systems to prevent conflicts
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('user', JSON.stringify(data.user));
+            localStorage.setItem('currentUser', JSON.stringify(data.user));
             
-            document.body.insertAdjacentHTML('beforeend', modalHTML);
-        }
-
-        // Select existing account
-        async function selectAccount(userId) {
-            setLoading(true);
-            
-            try {
-                const response = await fetch(`${BACKEND_URL}/api/google-login-account`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ user_id: userId })
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    showAlert('Login successful!', 'success');
-                    localStorage.setItem('token', data.token);
-                    localStorage.setItem('user', JSON.stringify(data.user));
-                    
-                    setTimeout(() => {
-                        window.location.href = 'index.html';
-                    }, 1000);
-                } else {
-                    showAlert(data.error || 'Login failed');
-                }
-            } catch (error) {
-                showAlert('Network error. Please try again.');
-            } finally {
-                setLoading(false);
-                document.querySelector('.account-modal')?.remove();
-            }
-        }
-
-        // Create new Google account
-        async function createGoogleAccount(googleUser) {
-            setLoading(true);
-            
-            try {
-                const response = await fetch(`${BACKEND_URL}/api/google-create-account`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(googleUser)
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    showAlert('Account created successfully!', 'success');
-                    localStorage.setItem('token', data.token);
-                    localStorage.setItem('user', JSON.stringify(data.user));
-                    
-                    setTimeout(() => {
-                        window.location.href = 'index.html';
-                    }, 1000);
-                } else {
-                    showAlert(data.error || 'Account creation failed');
-                }
-            } catch (error) {
-                showAlert('Network error. Please try again.');
-            } finally {
-                setLoading(false);
-            }
-        }
-
-        // Create new account button handler
-        function createNewAccount(googleUser) {
-            document.querySelector('.account-modal')?.remove();
-            createGoogleAccount(googleUser);
-        }
-
-        // Facebook Login
-        function facebookLogin() {
-            showAlert('Facebook login coming soon!', 'success');
-        }
-
-        // Forgot password
-        function forgotPassword() {
-            const email = document.getElementById('email').value;
-            if (!email) {
-                showAlert('Please enter your email address first');
-                return;
-            }
-            showAlert(`Password reset feature coming soon!`, 'success');
-        }
-
-        // Check if user is already logged in
-        function checkAuth() {
-            const token = localStorage.getItem('token');
-            const user = localStorage.getItem('user');
-            if (token && user) {
+            setTimeout(() => {
                 window.location.href = 'index.html';
-            }
+            }, 1000);
+        } else {
+            showAlert(data.error || 'Login failed');
         }
+    } catch (error) {
+        showAlert('Network error. Please try again.');
+    } finally {
+        setLoading(false);
+    }
+});
 
-        checkAuth();
+// Google Login with Account Selection - FIXED to work with both systems
+async function googleLogin() {
+    // Demo Google user data
+    const googleUser = {
+        email: 'demo@gmail.com',
+        name: 'Google User',
+        profile_pic: 'https://via.placeholder.com/80'
+    };
+    
+    setLoading(true);
+
+    try {
+        // First check if account exists
+        const authResponse = await fetch(`${BACKEND_URL}/api/google-auth`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(googleUser)
+        });
+
+        const authData = await authResponse.json();
+
+        if (authData.success) {
+            if (authData.action === 'choose_account') {
+                // Show account selection modal
+                showAccountSelection(authData.accounts, googleUser);
+            } else if (authData.action === 'create_account') {
+                // Create new account
+                await createGoogleAccount(googleUser);
+            }
+        } else {
+            showAlert(authData.error || 'Google login failed');
+        }
+    } catch (error) {
+        showAlert('Network error. Please try again.');
+    } finally {
+        setLoading(false);
+    }
+}
+
+// Show account selection modal
+function showAccountSelection(accounts, googleUser) {
+    const modalHTML = `
+        <div class="account-modal">
+            <div class="modal-content">
+                <h3>Choose an Account</h3>
+                <p>Found ${accounts.length} account(s) with this email</p>
+                <div class="accounts-list">
+                    ${accounts.map(account => `
+                        <div class="account-item" onclick="selectAccount(${account.id})">
+                            <img src="${account.profilePic}" alt="Profile">
+                            <div>
+                                <strong>${account.name}</strong>
+                                <p>${account.email}</p>
+                                <small>${account.provider} • Created: ${new Date(account.created_at).toLocaleDateString()}</small>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+                <button onclick="createNewAccount(${JSON.stringify(googleUser).replace(/"/g, '&quot;')})" class="create-new-btn">
+                    Create New Account
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+// Select existing account - FIXED to work with both systems
+async function selectAccount(userId) {
+    setLoading(true);
+    
+    try {
+        const response = await fetch(`${BACKEND_URL}/api/google-login-account`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ user_id: userId })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            showAlert('Login successful!', 'success');
+            // Save in BOTH systems to prevent conflicts
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('user', JSON.stringify(data.user));
+            localStorage.setItem('currentUser', JSON.stringify(data.user));
+            
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 1000);
+        } else {
+            showAlert(data.error || 'Login failed');
+        }
+    } catch (error) {
+        showAlert('Network error. Please try again.');
+    } finally {
+        setLoading(false);
+        document.querySelector('.account-modal')?.remove();
+    }
+}
+
+// Create new Google account - FIXED to work with both systems
+async function createGoogleAccount(googleUser) {
+    setLoading(true);
+    
+    try {
+        const response = await fetch(`${BACKEND_URL}/api/google-create-account`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(googleUser)
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            showAlert('Account created successfully!', 'success');
+            // Save in BOTH systems to prevent conflicts
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('user', JSON.stringify(data.user));
+            localStorage.setItem('currentUser', JSON.stringify(data.user));
+            
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 1000);
+        } else {
+            showAlert(data.error || 'Account creation failed');
+        }
+    } catch (error) {
+        showAlert('Network error. Please try again.');
+    } finally {
+        setLoading(false);
+    }
+}
+
+// Create new account button handler
+function createNewAccount(googleUser) {
+    document.querySelector('.account-modal')?.remove();
+    createGoogleAccount(googleUser);
+}
+
+// Facebook Login
+function facebookLogin() {
+    showAlert('Facebook login coming soon!', 'success');
+}
+
+// Forgot password
+function forgotPassword() {
+    const email = document.getElementById('email').value;
+    if (!email) {
+        showAlert('Please enter your email address first');
+        return;
+    }
+    showAlert(`Password reset feature coming soon!`, 'success');
+}
+
+// Initialize
+checkAuth();
     </script>
 </body>
 </html>
