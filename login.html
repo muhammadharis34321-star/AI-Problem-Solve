@@ -429,49 +429,141 @@ function setLoading(loading) {
     }
 }
 
-// REAL GOOGLE LOGIN WITH BACKEND INTEGRATION
+// SIMPLE GOOGLE ACCOUNT SELECTION WITHOUT POPUP
 async function googleLogin() {
+    console.log("Starting Google login...");
+    
+    // Show account selection directly on page
+    const selectedAccount = await showAccountSelection();
+    
+    if (!selectedAccount) {
+        console.log("No account selected");
+        return;
+    }
+    
+    console.log("Proceeding with account:", selectedAccount);
+    await processGoogleLogin(selectedAccount);
+}
+
+// Show account selection on main page
+function showAccountSelection() {
+    return new Promise((resolve) => {
+        // Create account selection modal
+        const modalHTML = `
+            <div class="account-modal" style="display: block;">
+                <div class="modal-content">
+                    <h3>🔐 Sign in with Google</h3>
+                    <p>Choose an account to continue to AI Problem Solve</p>
+                    
+                    <div class="accounts-list">
+                        <div class="account-item" data-account='{"email":"user1@gmail.com","name":"John Doe","profilePic":"https://ui-avatars.com/api/?name=John+Doe&background=4285f4&color=fff"}'>
+                            <div class="account-avatar">J</div>
+                            <div class="account-info">
+                                <div class="account-name">John Doe</div>
+                                <div class="account-email">user1@gmail.com</div>
+                            </div>
+                        </div>
+                        
+                        <div class="account-item" data-account='{"email":"user2@gmail.com","name":"Jane Smith","profilePic":"https://ui-avatars.com/api/?name=Jane+Smith&background=db4437&color=fff"}'>
+                            <div class="account-avatar">J</div>
+                            <div class="account-info">
+                                <div class="account-name">Jane Smith</div>
+                                <div class="account-email">user2@gmail.com</div>
+                            </div>
+                        </div>
+                        
+                        <div class="account-item" data-account='{"email":"developer@gmail.com","name":"Developer Account","profilePic":"https://ui-avatars.com/api/?name=Developer&background=0f9d58&color=fff"}'>
+                            <div class="account-avatar">D</div>
+                            <div class="account-info">
+                                <div class="account-name">Developer Account</div>
+                                <div class="account-email">developer@gmail.com</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="text-align: center; margin-top: 20px;">
+                        <button onclick="addCustomGoogleAccount()" style="padding: 10px 20px; background: #4285f4; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                            + Use another account
+                        </button>
+                        <button onclick="closeAccountModal()" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer; margin-left: 10px;">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Add modal to page
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        
+        // Add click handlers for account items
+        setTimeout(() => {
+            const accountItems = document.querySelectorAll('.account-item');
+            accountItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    const accountData = JSON.parse(this.getAttribute('data-account'));
+                    closeAccountModal();
+                    resolve(accountData);
+                });
+            });
+        }, 100);
+        
+        // Handle cancel
+        window.closeAccountModal = function() {
+            document.querySelector('.account-modal')?.remove();
+            resolve(null);
+        };
+        
+        // Handle custom account
+        window.addCustomGoogleAccount = function() {
+            const email = prompt("Enter your Google email:", "newuser@gmail.com");
+            if (!email) return;
+            
+            const name = prompt("Enter your name:", email.split('@')[0] || "Google User");
+            if (!name) return;
+            
+            const customAccount = {
+                email: email,
+                name: name,
+                profilePic: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=4285f4&color=fff`
+            };
+            
+            closeAccountModal();
+            resolve(customAccount);
+        };
+    });
+}
+
+// Process Google login with backend
+async function processGoogleLogin(accountData) {
     setLoading(true);
-    console.log("Starting Google login process...");
     
     try {
-        // Step 1: Show account selection popup
-        const selectedAccount = await showGoogleAccountPopup();
+        console.log("Sending to backend:", accountData);
         
-        if (!selectedAccount) {
-            setLoading(false);
-            return;
-        }
-        
-        console.log("Selected account:", selectedAccount);
-        
-        // Step 2: Check with backend if account exists
+        // Step 1: Check account with backend
         const authResponse = await fetch(`${BACKEND_URL}/api/google-auth`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-                email: selectedAccount.email,
-                name: selectedAccount.name,
-                profile_pic: selectedAccount.profilePic
-            })
+            body: JSON.stringify(accountData)
         });
         
         if (!authResponse.ok) {
-            throw new Error('Backend unavailable');
+            throw new Error(`Backend error: ${authResponse.status}`);
         }
         
         const authData = await authResponse.json();
-        console.log("Backend auth response:", authData);
+        console.log("Backend response:", authData);
         
         if (authData.success) {
             if (authData.action === 'choose_account') {
-                // Multiple accounts found - show selection
-                await handleMultipleAccounts(authData.accounts, selectedAccount);
+                // Show backend accounts for selection
+                await showBackendAccounts(authData.accounts, accountData);
             } else if (authData.action === 'create_account') {
                 // Create new account
-                await createGoogleAccount(selectedAccount);
+                await createGoogleAccount(accountData);
             }
         } else {
             throw new Error(authData.error || 'Authentication failed');
@@ -479,227 +571,78 @@ async function googleLogin() {
         
     } catch (error) {
         console.error('Google login error:', error);
-        // Fallback: Direct account creation
-        await handleGoogleLoginFallback();
+        showAlert('Backend connection failed. Using demo mode.', 'success');
+        // Fallback to direct login
+        await directGoogleLogin(accountData);
     } finally {
         setLoading(false);
     }
 }
 
-// Show Google account selection popup
-function showGoogleAccountPopup() {
+// Show accounts from backend
+async function showBackendAccounts(accounts, originalAccount) {
     return new Promise((resolve) => {
-        const popup = window.open('', 'google_login', 'width=500,height=600,left=200,top=100');
-        
-        if (!popup) {
-            showAlert('Please allow popups for Google login', 'error');
-            resolve(null);
-            return;
-        }
-        
-        const popupContent = `
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <title>Google Sign In</title>
-                <style>
-                    body { 
-                        font-family: Arial, sans-serif; 
-                        margin: 0; 
-                        padding: 20px;
-                        background: white;
-                    }
-                    .google-header { 
-                        text-align: center; 
-                        margin-bottom: 30px;
-                    }
-                    .google-logo { 
-                        font-size: 24px; 
-                        font-weight: bold; 
-                        color: #4285f4;
-                        margin-bottom: 10px;
-                    }
-                    .account-list { 
-                        margin: 20px 0; 
-                    }
-                    .account-item {
-                        padding: 15px;
-                        border: 1px solid #ddd;
-                        border-radius: 8px;
-                        margin-bottom: 10px;
-                        cursor: pointer;
-                        display: flex;
-                        align-items: center;
-                    }
-                    .account-item:hover {
-                        background: #f8f9fa;
-                    }
-                    .account-avatar {
-                        width: 40px;
-                        height: 40px;
-                        border-radius: 50%;
-                        background: #4285f4;
-                        color: white;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        margin-right: 15px;
-                        font-weight: bold;
-                    }
-                    .account-info {
-                        flex: 1;
-                    }
-                    .account-name {
-                        font-weight: bold;
-                        color: #333;
-                    }
-                    .account-email {
-                        color: #666;
-                        font-size: 14px;
-                    }
-                    .add-account {
-                        text-align: center;
-                        margin-top: 20px;
-                    }
-                    .add-account-btn {
-                        color: #4285f4;
-                        text-decoration: none;
-                        font-weight: bold;
-                        cursor: pointer;
-                    }
-                </style>
-            </head>
-            <body>
-                <div class="google-header">
-                    <div class="google-logo">Google</div>
-                    <h2>Sign in with Google</h2>
-                    <p>Choose an account to continue to AI Problem Solve</p>
-                </div>
-                
-                <div class="account-list">
-                    <div class="account-item" onclick="window.opener.selectGoogleAccount({
-                        email: 'user1@gmail.com',
-                        name: 'John Doe',
-                        profilePic: 'https://ui-avatars.com/api/?name=John+Doe&background=4285f4&color=fff'
-                    }); window.close()">
-                        <div class="account-avatar">J</div>
-                        <div class="account-info">
-                            <div class="account-name">John Doe</div>
-                            <div class="account-email">user1@gmail.com</div>
-                        </div>
+        const modalHTML = `
+            <div class="account-modal" style="display: block;">
+                <div class="modal-content">
+                    <h3>Multiple Accounts Found</h3>
+                    <p>Found ${accounts.length} account(s) with this email</p>
+                    
+                    <div class="accounts-list">
+                        ${accounts.map(account => `
+                            <div class="account-item" data-account-id="${account.id}">
+                                <img src="${account.profilePic}" alt="Profile" style="width: 40px; height: 40px; border-radius: 50%; margin-right: 15px;" onerror="this.src='https://via.placeholder.com/80'">
+                                <div>
+                                    <strong>${account.name}</strong>
+                                    <p>${account.email}</p>
+                                    <small>${account.provider} • ${new Date(account.created_at).toLocaleDateString()}</small>
+                                </div>
+                            </div>
+                        `).join('')}
                     </div>
                     
-                    <div class="account-item" onclick="window.opener.selectGoogleAccount({
-                        email: 'user2@gmail.com', 
-                        name: 'Jane Smith',
-                        profilePic: 'https://ui-avatars.com/api/?name=Jane+Smith&background=db4437&color=fff'
-                    }); window.close()">
-                        <div class="account-avatar">J</div>
-                        <div class="account-info">
-                            <div class="account-name">Jane Smith</div>
-                            <div class="account-email">user2@gmail.com</div>
-                        </div>
-                    </div>
-                    
-                    <div class="account-item" onclick="window.opener.selectGoogleAccount({
-                        email: 'developer@gmail.com',
-                        name: 'Developer Account', 
-                        profilePic: 'https://ui-avatars.com/api/?name=Developer&background=0f9d58&color=fff'
-                    }); window.close()">
-                        <div class="account-avatar">D</div>
-                        <div class="account-info">
-                            <div class="account-name">Developer Account</div>
-                            <div class="account-email">developer@gmail.com</div>
-                        </div>
+                    <div style="text-align: center; margin-top: 20px;">
+                        <button onclick="createNewBackendAccount(${JSON.stringify(originalAccount).replace(/"/g, '&quot;')})" style="padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                            Create New Account
+                        </button>
+                        <button onclick="closeBackendAccountModal()" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer; margin-left: 10px;">
+                            Cancel
+                        </button>
                     </div>
                 </div>
-                
-                <div class="add-account">
-                    <a class="add-account-btn" onclick="window.opener.addNewGoogleAccount(); window.close()">
-                        Use another account
-                    </a>
-                </div>
-            </body>
-            </html>
+            </div>
         `;
         
-        popup.document.write(popupContent);
-        popup.document.close();
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
         
-        // Handle popup close
-        const checkPopup = setInterval(() => {
-            if (popup.closed) {
-                clearInterval(checkPopup);
-                resolve(null);
-            }
-        }, 500);
+        // Add click handlers
+        setTimeout(() => {
+            const accountItems = document.querySelectorAll('.account-item[data-account-id]');
+            accountItems.forEach(item => {
+                item.addEventListener('click', async function() {
+                    const accountId = this.getAttribute('data-account-id');
+                    closeBackendAccountModal();
+                    await loginWithAccountId(accountId);
+                    resolve();
+                });
+            });
+        }, 100);
+        
+        window.closeBackendAccountModal = function() {
+            document.querySelector('.account-modal')?.remove();
+            resolve();
+        };
+        
+        window.createNewBackendAccount = function(accountData) {
+            closeBackendAccountModal();
+            createGoogleAccount(accountData);
+            resolve();
+        };
     });
 }
 
-// Handle account selection from popup
-function selectGoogleAccount(accountData) {
-    console.log("Account selected from popup:", accountData);
-    window.selectedGoogleAccount = accountData;
-}
-
-// Add new Google account
-function addNewGoogleAccount() {
-    const email = prompt("Enter your Google email:", "newuser@gmail.com");
-    const name = prompt("Enter your name:", email ? email.split('@')[0] : "Google User");
-    
-    if (email && name) {
-        window.selectedGoogleAccount = {
-            email: email,
-            name: name,
-            profilePic: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=4285f4&color=fff`
-        };
-    }
-}
-
-// Handle multiple accounts from backend
-async function handleMultipleAccounts(accounts, selectedAccount) {
-    console.log("Multiple accounts found:", accounts);
-    
-    if (accounts.length === 1) {
-        // Auto-login if only one account
-        await loginWithAccount(accounts[0].id);
-    } else {
-        // Show account selection modal
-        showAccountSelectionModal(accounts, selectedAccount);
-    }
-}
-
-// Show account selection modal
-function showAccountSelectionModal(accounts, googleUser) {
-    const modalHTML = `
-        <div class="account-modal">
-            <div class="modal-content">
-                <h3>Choose an Account</h3>
-                <p>Found ${accounts.length} account(s) with this email</p>
-                <div class="accounts-list">
-                    ${accounts.map(account => `
-                        <div class="account-item" onclick="window.selectExistingAccount(${account.id})">
-                            <img src="${account.profilePic}" alt="Profile" onerror="this.src='https://via.placeholder.com/80'">
-                            <div>
-                                <strong>${account.name}</strong>
-                                <p>${account.email}</p>
-                                <small>${account.provider} • Created: ${new Date(account.created_at).toLocaleDateString()}</small>
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-                <button onclick="window.createNewAccount(${JSON.stringify(googleUser).replace(/"/g, '&quot;')})" class="create-new-btn">
-                    Create New Account
-                </button>
-            </div>
-        </div>
-    `;
-    
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
-}
-
-// Select existing account
-async function selectExistingAccount(userId) {
+// Login with account ID
+async function loginWithAccountId(userId) {
     setLoading(true);
     
     try {
@@ -731,12 +674,11 @@ async function selectExistingAccount(userId) {
         showAlert('Network error. Please try again.');
     } finally {
         setLoading(false);
-        document.querySelector('.account-modal')?.remove();
     }
 }
 
 // Create new Google account
-async function createGoogleAccount(googleUser) {
+async function createGoogleAccount(accountData) {
     setLoading(true);
     
     try {
@@ -745,7 +687,7 @@ async function createGoogleAccount(googleUser) {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(googleUser)
+            body: JSON.stringify(accountData)
         });
 
         const data = await response.json();
@@ -771,30 +713,15 @@ async function createGoogleAccount(googleUser) {
     }
 }
 
-// Create new account handler
-function createNewAccount(googleUser) {
-    document.querySelector('.account-modal')?.remove();
-    createGoogleAccount(googleUser);
-}
-
-// Fallback Google login (if backend fails)
-async function handleGoogleLoginFallback() {
-    console.log("Using fallback Google login");
-    
-    const selectedAccount = window.selectedGoogleAccount || {
-        email: 'fallback@gmail.com',
-        name: 'Google User',
-        profilePic: 'https://via.placeholder.com/80'
-    };
-    
-    // Try direct Google login endpoint
+// Direct Google login (fallback)
+async function directGoogleLogin(accountData) {
     try {
         const response = await fetch(`${BACKEND_URL}/api/google-login`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(selectedAccount)
+            body: JSON.stringify(accountData)
         });
 
         if (response.ok) {
@@ -814,20 +741,18 @@ async function handleGoogleLoginFallback() {
             }
         }
     } catch (error) {
-        console.log("Direct Google login also failed");
+        console.log("Direct login also failed");
     }
     
-    // Ultimate fallback - local storage only
-    showAlert('Using offline mode. Some features may be limited.', 'success');
-    
+    // Ultimate fallback
     const fallbackUser = {
         id: 'google_' + Date.now(),
-        username: selectedAccount.email.split('@')[0],
-        email: selectedAccount.email,
-        name: selectedAccount.name,
+        username: accountData.email.split('@')[0],
+        email: accountData.email,
+        name: accountData.name,
         loginTime: new Date().toISOString(),
         provider: 'google',
-        profilePic: selectedAccount.profilePic,
+        profilePic: accountData.profilePic,
         isDemo: true
     };
     
@@ -835,101 +760,12 @@ async function handleGoogleLoginFallback() {
     localStorage.setItem('token', 'google_token_' + Date.now());
     localStorage.setItem('user', JSON.stringify(fallbackUser));
     
+    showAlert(`Welcome ${accountData.name}! (Offline Mode)`, 'success');
+    
     setTimeout(() => {
         window.location.href = 'index.html';
     }, 1000);
 }
-
-// Main Google login flow
-async function startGoogleLogin() {
-    setLoading(true);
-    
-    // Wait for account selection
-    let accountData = window.selectedGoogleAccount;
-    let attempts = 0;
-    
-    while (!accountData && attempts < 10) {
-        await new Promise(resolve => setTimeout(resolve, 500));
-        accountData = window.selectedGoogleAccount;
-        attempts++;
-    }
-    
-    if (!accountData) {
-        setLoading(false);
-        showAlert('No account selected', 'error');
-        return;
-    }
-    
-    // Proceed with backend authentication
-    try {
-        const authResponse = await fetch(`${BACKEND_URL}/api/google-auth`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(accountData)
-        });
-        
-        if (authResponse.ok) {
-            const authData = await authResponse.json();
-            await handleBackendResponse(authData, accountData);
-        } else {
-            throw new Error('Backend unavailable');
-        }
-    } catch (error) {
-        await handleGoogleLoginFallback();
-    }
-}
-
-// Handle backend response
-async function handleBackendResponse(authData, accountData) {
-    if (authData.success) {
-        if (authData.action === 'choose_account') {
-            if (authData.accounts.length === 1) {
-                await loginWithAccount(authData.accounts[0].id);
-            } else {
-                showAccountSelectionModal(authData.accounts, accountData);
-            }
-        } else if (authData.action === 'create_account') {
-            await createGoogleAccount(accountData);
-        }
-    } else {
-        throw new Error(authData.error);
-    }
-}
-
-// Login with specific account
-async function loginWithAccount(userId) {
-    const response = await fetch(`${BACKEND_URL}/api/google-login-account`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ user_id: userId })
-    });
-
-    const data = await response.json();
-
-    if (data.success) {
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
-        localStorage.setItem('currentUser', JSON.stringify(data.user));
-        
-        showAlert(`Welcome back ${data.user.name}!`, 'success');
-        
-        setTimeout(() => {
-            window.location.href = 'index.html';
-        }, 1000);
-    } else {
-        throw new Error(data.error);
-    }
-}
-
-// Make functions global for popup
-window.selectGoogleAccount = selectGoogleAccount;
-window.addNewGoogleAccount = addNewGoogleAccount;
-window.selectExistingAccount = selectExistingAccount;
-window.createNewAccount = createNewAccount;
 
 // Regular login form
 document.getElementById('loginForm').addEventListener('submit', async function(e) {
@@ -991,19 +827,75 @@ function forgotPassword() {
     showAlert(`Password reset feature coming soon!`, 'success');
 }
 
-// Update the main Google login to use new flow
-function updatedGoogleLogin() {
-    // Reset selected account
-    window.selectedGoogleAccount = null;
-    startGoogleLogin();
-}
-
-// Replace the original Google login
-const googleBtn = document.querySelector('.social-btn.google');
-googleBtn.onclick = updatedGoogleLogin;
-
 // Initialize
 checkAuth();
+
+// Add CSS for account selection
+const style = document.createElement('style');
+style.textContent = `
+    .account-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+    .modal-content {
+        background: white;
+        border-radius: 15px;
+        padding: 30px;
+        max-width: 500px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+    .accounts-list {
+        margin: 20px 0;
+    }
+    .account-item {
+        display: flex;
+        align-items: center;
+        padding: 15px;
+        border: 2px solid #e1e1e1;
+        border-radius: 10px;
+        margin-bottom: 10px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    .account-item:hover {
+        border-color: #667eea;
+        background: #f8f9ff;
+    }
+    .account-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #4285f4;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 15px;
+        font-weight: bold;
+    }
+    .account-info {
+        flex: 1;
+    }
+    .account-name {
+        font-weight: bold;
+        color: #333;
+    }
+    .account-email {
+        color: #666;
+        font-size: 14px;
+    }
+`;
+document.head.appendChild(style);
 </script>
 </body>
 </html>
