@@ -571,22 +571,12 @@ function initializeApp() {
     console.log("App initialized successfully!");
 }
 
-// Updated sendMessage function with guest limit check
+// UPDATED sendMessage function with proper guest limit handling
 async function sendMessage() {
     const userInput = document.getElementById('userInput');
     const message = userInput.value.trim();
     
     if(!message) return;
-    
-    // Check if user is guest and has reached limit
-    const guestCounter = document.getElementById('guestCounter');
-    if (guestCounter.style.display !== 'none') {
-        const remaining = parseInt(document.getElementById('remainingMessages').textContent);
-        if (remaining <= 0) {
-            // No alert, just don't send message
-            return;
-        }
-    }
     
     console.log("Sending message:", message);
     
@@ -617,18 +607,31 @@ async function sendMessage() {
                     is_guest: true,
                     remaining_messages: data.remaining_messages
                 });
+                
+                // AUTO REDIRECT WHEN LIMIT REACHED
+                if (data.remaining_messages <= 0) {
+                    setTimeout(() => {
+                        window.location.href = 'login.html';
+                    }, 1000);
+                }
             }
         } else {
             if (data.limit_exceeded) {
-                // Show limit exceeded and redirect (no alert)
+                // Show limit exceeded and redirect immediately
                 updateGuestCounter({
                     is_guest: true,
                     remaining_messages: 0
                 });
-                // Auto redirect after 2 seconds
+                // Auto redirect immediately
                 setTimeout(() => {
                     window.location.href = 'login.html';
-                }, 2000);
+                }, 500);
+            } else {
+                // Handle other errors silently
+                addMessageToChat(message, 'user');
+                setTimeout(() => {
+                    addMessageToChat("Sorry, there was an error. Please try again.", 'ai');
+                }, 1000);
             }
         }
     } catch (error) {
@@ -639,8 +642,24 @@ async function sendMessage() {
             addMessageToChat("I understand: " + message, 'ai');
         }, 1000);
         
-        // Simulate message count decrease for guest
-        setTimeout(checkGuestLimit, 500);
+        // Simulate message count decrease for guest (for demo)
+        const guestCounter = document.getElementById('guestCounter');
+        if (guestCounter.style.display !== 'none') {
+            const currentRemaining = parseInt(document.getElementById('remainingMessages').textContent);
+            const newRemaining = currentRemaining - 1;
+            
+            updateGuestCounter({
+                is_guest: true,
+                remaining_messages: newRemaining
+            });
+            
+            // Auto redirect when demo limit reached
+            if (newRemaining <= 0) {
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 1000);
+            }
+        }
     }
     
     userInput.value = '';
@@ -654,6 +673,12 @@ function addMessageToChat(message, sender) {
     messageDiv.textContent = message;
     messagesContainer.appendChild(messageDiv);
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    
+    // Hide welcome message after first message
+    const welcomeMessage = document.getElementById('welcomeMessage');
+    if (welcomeMessage) {
+        welcomeMessage.style.display = 'none';
+    }
 }
 
 function clearChatHistory() {
@@ -662,6 +687,12 @@ function clearChatHistory() {
         const messagesContainer = document.getElementById('messagesContainer');
         messagesContainer.innerHTML = '';
         alert('Chat history cleared!');
+        
+        // Show welcome message again
+        const welcomeMessage = document.getElementById('welcomeMessage');
+        if (welcomeMessage) {
+            welcomeMessage.style.display = 'block';
+        }
     }
 }
 
@@ -669,7 +700,39 @@ function clearChatHistory() {
 document.addEventListener('DOMContentLoaded', function() {
     // Initial check
     setTimeout(checkGuestLimit, 1000);
+    
+    // Add Enter key support for sending messages
+    const userInput = document.getElementById('userInput');
+    if (userInput) {
+        userInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+    }
 });
+
+// Add this function to handle guest message simulation
+function simulateGuestMessageCount() {
+    const guestCounter = document.getElementById('guestCounter');
+    if (guestCounter.style.display !== 'none') {
+        const currentRemaining = parseInt(document.getElementById('remainingMessages').textContent);
+        const newRemaining = currentRemaining - 1;
+        
+        updateGuestCounter({
+            is_guest: true,
+            remaining_messages: newRemaining
+        });
+        
+        // Auto redirect when limit reached
+        if (newRemaining <= 0) {
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 1000);
+        }
+    }
+}
 </script>
     <script src="script.js"></script>
   </body>
