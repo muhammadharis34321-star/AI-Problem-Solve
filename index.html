@@ -435,9 +435,9 @@ function updateGuestCounter(data) {
             inputContainer.classList.add('input-disabled');
             limitWarning.style.display = 'none';
             
-            // Auto-redirect to login after 2 seconds
+            // ✅ FIXED: Correct GitHub Pages redirect URL
             setTimeout(() => {
-                window.location.href = 'login.html';
+                window.location.href = 'https://muhammadharis34321-star.github.io/AI-Problem-Solve/login.html';
             }, 2000);
             
         } else {
@@ -499,7 +499,7 @@ function logout() {
         localStorage.removeItem('user');
         
         // Redirect to login
-        window.location.href = "login.html";
+        window.location.href = "https://muhammadharis34321-star.github.io/AI-Problem-Solve/login.html";
     }
 }
 
@@ -571,7 +571,7 @@ function initializeApp() {
     console.log("App initialized successfully!");
 }
 
-// UPDATED sendMessage function with proper guest limit handling
+// ✅ FIXED: UPDATED sendMessage function with proper guest limit handling and redirect
 async function sendMessage() {
     const userInput = document.getElementById('userInput');
     const message = userInput.value.trim();
@@ -608,10 +608,10 @@ async function sendMessage() {
                     remaining_messages: data.remaining_messages
                 });
                 
-                // AUTO REDIRECT WHEN LIMIT REACHED
+                // ✅ FIXED: Correct redirect URL when limit reached
                 if (data.remaining_messages <= 0) {
                     setTimeout(() => {
-                        window.location.href = 'login.html';
+                        window.location.href = 'https://muhammadharis34321-star.github.io/AI-Problem-Solve/login.html';
                     }, 1000);
                 }
             }
@@ -622,9 +622,9 @@ async function sendMessage() {
                     is_guest: true,
                     remaining_messages: 0
                 });
-                // Auto redirect immediately
+                // ✅ FIXED: Correct redirect URL
                 setTimeout(() => {
-                    window.location.href = 'login.html';
+                    window.location.href = 'https://muhammadharis34321-star.github.io/AI-Problem-Solve/login.html';
                 }, 500);
             } else {
                 // Handle other errors silently
@@ -643,23 +643,7 @@ async function sendMessage() {
         }, 1000);
         
         // Simulate message count decrease for guest (for demo)
-        const guestCounter = document.getElementById('guestCounter');
-        if (guestCounter.style.display !== 'none') {
-            const currentRemaining = parseInt(document.getElementById('remainingMessages').textContent);
-            const newRemaining = currentRemaining - 1;
-            
-            updateGuestCounter({
-                is_guest: true,
-                remaining_messages: newRemaining
-            });
-            
-            // Auto redirect when demo limit reached
-            if (newRemaining <= 0) {
-                setTimeout(() => {
-                    window.location.href = 'login.html';
-                }, 1000);
-            }
-        }
+        simulateGuestMessageCount();
     }
     
     userInput.value = '';
@@ -696,6 +680,27 @@ function clearChatHistory() {
     }
 }
 
+// ✅ FIXED: simulateGuestMessageCount function with correct redirect
+function simulateGuestMessageCount() {
+    const guestCounter = document.getElementById('guestCounter');
+    if (guestCounter.style.display !== 'none') {
+        const currentRemaining = parseInt(document.getElementById('remainingMessages').textContent);
+        const newRemaining = currentRemaining - 1;
+        
+        updateGuestCounter({
+            is_guest: true,
+            remaining_messages: newRemaining
+        });
+        
+        // ✅ FIXED: Correct redirect URL when demo limit reached
+        if (newRemaining <= 0) {
+            setTimeout(() => {
+                window.location.href = 'https://muhammadharis34321-star.github.io/AI-Problem-Solve/login.html';
+            }, 500);
+        }
+    }
+}
+
 // Check guest limit when page loads
 document.addEventListener('DOMContentLoaded', function() {
     // Initial check
@@ -713,26 +718,21 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Add this function to handle guest message simulation
-function simulateGuestMessageCount() {
-    const guestCounter = document.getElementById('guestCounter');
-    if (guestCounter.style.display !== 'none') {
-        const currentRemaining = parseInt(document.getElementById('remainingMessages').textContent);
-        const newRemaining = currentRemaining - 1;
-        
-        updateGuestCounter({
-            is_guest: true,
-            remaining_messages: newRemaining
-        });
-        
-        // Auto redirect when limit reached
-        if (newRemaining <= 0) {
-       setTimeout(() => {
-    window.location.href = 'https://muhammadharis34321-star.github.io/AI-Problem-Solve/login.html';
-}, 500);
-        }
+// Add click event for send button
+document.addEventListener('DOMContentLoaded', function() {
+    const sendButton = document.getElementById('sendButton');
+    if (sendButton) {
+        sendButton.addEventListener('click', sendMessage);
     }
-}
+});
+
+// Auto-focus on input field
+document.addEventListener('DOMContentLoaded', function() {
+    const userInput = document.getElementById('userInput');
+    if (userInput) {
+        userInput.focus();
+    }
+});
 </script>
     <script src="script.js"></script>
   </body>
