@@ -384,48 +384,97 @@
             }
         });
 
-        // Google Login Handler - Fixed
-        async function handleGoogleLogin() {
-            const googleBtn = document.querySelector('.social-btn.google');
-            const originalText = googleBtn.innerHTML;
+   // Google Login Handler - DEBUG VERSION
+async function handleGoogleLogin() {
+    const googleBtn = document.querySelector('.social-btn.google');
+    const originalText = googleBtn.innerHTML;
+    
+    googleBtn.innerHTML = '<div class="loading-spinner"></div> Signing in...';
+    googleBtn.disabled = true;
+
+    try {
+        showMessage('Signing in with Google...', 'success');
+        console.log('Sending Google login request...');
+        
+        // Direct API call
+        const response = await fetch(`${BACKEND_URL}/api/google-login`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({})
+        });
+
+        console.log('Response status:', response.status);
+        const data = await response.json();
+        console.log('Response data:', data);
+
+        if (data.success) {
+            localStorage.setItem('currentUser', JSON.stringify(data.user));
+            localStorage.setItem('authToken', data.token);
+            showMessage('Google login successful! Redirecting...', 'success');
             
-            googleBtn.innerHTML = '<div class="loading-spinner"></div> Signing in...';
-            googleBtn.disabled = true;
-
-            try {
-                showMessage('Signing in with Google...', 'success');
-                
-                // Direct API call - no OAuth popup
-                const response = await fetch(`${BACKEND_URL}/api/google-login`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({})
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    localStorage.setItem('currentUser', JSON.stringify(data.user));
-                    localStorage.setItem('authToken', data.token);
-                    showMessage('Google login successful! Redirecting...', 'success');
-                    
-                    setTimeout(() => {
-                        window.location.href = 'index.html';
-                    }, 1000);
-                } else {
-                    showMessage(data.error || 'Login failed', 'error');
-                }
-            } catch (error) {
-                console.error('Google login error:', error);
-                showMessage('Login failed. Please try again.', 'error');
-            } finally {
-                googleBtn.innerHTML = originalText;
-                googleBtn.disabled = false;
-            }
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 1000);
+        } else {
+            console.error('Google login failed:', data.error);
+            showMessage(data.error || 'Login failed', 'error');
         }
+    } catch (error) {
+        console.error('Google login error:', error);
+        showMessage('Login failed. Please try again.', 'error');
+    } finally {
+        googleBtn.innerHTML = originalText;
+        googleBtn.disabled = false;
+    }
+}
 
+// Facebook Login Handler - DEBUG VERSION
+async function handleFacebookLogin() {
+    const facebookBtn = document.querySelector('.social-btn.facebook');
+    const originalText = facebookBtn.innerHTML;
+    
+    facebookBtn.innerHTML = '<div class="loading-spinner"></div> Signing in...';
+    facebookBtn.disabled = true;
+
+    try {
+        showMessage('Signing in with Facebook...', 'success');
+        console.log('Sending Facebook login request...');
+        
+        // Direct API call
+        const response = await fetch(`${BACKEND_URL}/api/facebook-login`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({})
+        });
+
+        console.log('Response status:', response.status);
+        const data = await response.json();
+        console.log('Response data:', data);
+
+        if (data.success) {
+            localStorage.setItem('currentUser', JSON.stringify(data.user));
+            localStorage.setItem('authToken', data.token);
+            showMessage('Facebook login successful! Redirecting...', 'success');
+            
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 1000);
+        } else {
+            console.error('Facebook login failed:', data.error);
+            showMessage(data.error || 'Login failed', 'error');
+        }
+    } catch (error) {
+        console.error('Facebook login error:', error);
+        showMessage('Login failed. Please try again.', 'error');
+    } finally {
+        facebookBtn.innerHTML = originalText;
+        facebookBtn.disabled = false;
+    }
+}
         // Facebook Login Handler - Fixed
         async function handleFacebookLogin() {
             const facebookBtn = document.querySelector('.social-btn.facebook');
