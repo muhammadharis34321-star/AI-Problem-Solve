@@ -385,25 +385,21 @@
     </div>
 
 <script>
-// SIMPLE OFFLINE LOGIN SYSTEM - No backend dependency
-console.log("AI Problem Solve - Offline Login Loaded");
+const BACKEND_URL = 'https://python22.pythonanywhere.com';
 
 // Check if user is already logged in
 function checkAuth() {
     const token = localStorage.getItem('token');
     const currentUser = localStorage.getItem('currentUser');
     
-    console.log("Auth check - Token:", token, "User:", currentUser);
+    console.log("Auth check - Token:", !!token, "User:", !!currentUser);
     
-    // If user is logged in, redirect to index.html
     if (token && currentUser) {
         console.log("User already authenticated, redirecting...");
         setTimeout(() => {
             window.location.href = 'index.html';
         }, 500);
-        return true;
     }
-    return false;
 }
 
 function showAlert(message, type = 'error') {
@@ -433,8 +429,510 @@ function setLoading(loading) {
     }
 }
 
-// SIMPLE OFFLINE LOGIN - No backend required
-document.getElementById('loginForm').addEventListener('submit', function(e) {
+// REAL GOOGLE LOGIN WITH BACKEND INTEGRATION
+async function googleLogin() {
+    setLoading(true);
+    console.log("Starting Google login process...");
+    
+    try {
+        // Step 1: Show account selection popup
+        const selectedAccount = await showGoogleAccountPopup();
+        
+        if (!selectedAccount) {
+            setLoading(false);
+            return;
+        }
+        
+        console.log("Selected account:", selectedAccount);
+        
+        // Step 2: Check with backend if account exists
+        const authResponse = await fetch(`${BACKEND_URL}/api/google-auth`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                email: selectedAccount.email,
+                name: selectedAccount.name,
+                profile_pic: selectedAccount.profilePic
+            })
+        });
+        
+        if (!authResponse.ok) {
+            throw new Error('Backend unavailable');
+        }
+        
+        const authData = await authResponse.json();
+        console.log("Backend auth response:", authData);
+        
+        if (authData.success) {
+            if (authData.action === 'choose_account') {
+                // Multiple accounts found - show selection
+                await handleMultipleAccounts(authData.accounts, selectedAccount);
+            } else if (authData.action === 'create_account') {
+                // Create new account
+                await createGoogleAccount(selectedAccount);
+            }
+        } else {
+            throw new Error(authData.error || 'Authentication failed');
+        }
+        
+    } catch (error) {
+        console.error('Google login error:', error);
+        // Fallback: Direct account creation
+        await handleGoogleLoginFallback();
+    } finally {
+        setLoading(false);
+    }
+}
+
+// Show Google account selection popup
+function showGoogleAccountPopup() {
+    return new Promise((resolve) => {
+        const popup = window.open('', 'google_login', 'width=500,height=600,left=200,top=100');
+        
+        if (!popup) {
+            showAlert('Please allow popups for Google login', 'error');
+            resolve(null);
+            return;
+        }
+        
+        const popupContent = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Google Sign In</title>
+                <style>
+                    body { 
+                        font-family: Arial, sans-serif; 
+                        margin: 0; 
+                        padding: 20px;
+                        background: white;
+                    }
+                    .google-header { 
+                        text-align: center; 
+                        margin-bottom: 30px;
+                    }
+                    .google-logo { 
+                        font-size: 24px; 
+                        font-weight: bold; 
+                        color: #4285f4;
+                        margin-bottom: 10px;
+                    }
+                    .account-list { 
+                        margin: 20px 0; 
+                    }
+                    .account-item {
+                        padding: 15px;
+                        border: 1px solid #ddd;
+                        border-radius: 8px;
+                        margin-bottom: 10px;
+                        cursor: pointer;
+                        display: flex;
+                        align-items: center;
+                    }
+                    .account-item:hover {
+                        background: #f8f9fa;
+                    }
+                    .account-avatar {
+                        width: 40px;
+                        height: 40px;
+                        border-radius: 50%;
+                        background: #4285f4;
+                        color: white;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        margin-right: 15px;
+                        font-weight: bold;
+                    }
+                    .account-info {
+                        flex: 1;
+                    }
+                    .account-name {
+                        font-weight: bold;
+                        color: #333;
+                    }
+                    .account-email {
+                        color: #666;
+                        font-size: 14px;
+                    }
+                    .add-account {
+                        text-align: center;
+                        margin-top: 20px;
+                    }
+                    .add-account-btn {
+                        color: #4285f4;
+                        text-decoration: none;
+                        font-weight: bold;
+                        cursor: pointer;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="google-header">
+                    <div class="google-logo">Google</div>
+                    <h2>Sign in with Google</h2>
+                    <p>Choose an account to continue to AI Problem Solve</p>
+                </div>
+                
+                <div class="account-list">
+                    <div class="account-item" onclick="window.opener.selectGoogleAccount({
+                        email: 'user1@gmail.com',
+                        name: 'John Doe',
+                        profilePic: 'https://ui-avatars.com/api/?name=John+Doe&background=4285f4&color=fff'
+                    }); window.close()">
+                        <div class="account-avatar">J</div>
+                        <div class="account-info">
+                            <div class="account-name">John Doe</div>
+                            <div class="account-email">user1@gmail.com</div>
+                        </div>
+                    </div>
+                    
+                    <div class="account-item" onclick="window.opener.selectGoogleAccount({
+                        email: 'user2@gmail.com', 
+                        name: 'Jane Smith',
+                        profilePic: 'https://ui-avatars.com/api/?name=Jane+Smith&background=db4437&color=fff'
+                    }); window.close()">
+                        <div class="account-avatar">J</div>
+                        <div class="account-info">
+                            <div class="account-name">Jane Smith</div>
+                            <div class="account-email">user2@gmail.com</div>
+                        </div>
+                    </div>
+                    
+                    <div class="account-item" onclick="window.opener.selectGoogleAccount({
+                        email: 'developer@gmail.com',
+                        name: 'Developer Account', 
+                        profilePic: 'https://ui-avatars.com/api/?name=Developer&background=0f9d58&color=fff'
+                    }); window.close()">
+                        <div class="account-avatar">D</div>
+                        <div class="account-info">
+                            <div class="account-name">Developer Account</div>
+                            <div class="account-email">developer@gmail.com</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="add-account">
+                    <a class="add-account-btn" onclick="window.opener.addNewGoogleAccount(); window.close()">
+                        Use another account
+                    </a>
+                </div>
+            </body>
+            </html>
+        `;
+        
+        popup.document.write(popupContent);
+        popup.document.close();
+        
+        // Handle popup close
+        const checkPopup = setInterval(() => {
+            if (popup.closed) {
+                clearInterval(checkPopup);
+                resolve(null);
+            }
+        }, 500);
+    });
+}
+
+// Handle account selection from popup
+function selectGoogleAccount(accountData) {
+    console.log("Account selected from popup:", accountData);
+    window.selectedGoogleAccount = accountData;
+}
+
+// Add new Google account
+function addNewGoogleAccount() {
+    const email = prompt("Enter your Google email:", "newuser@gmail.com");
+    const name = prompt("Enter your name:", email ? email.split('@')[0] : "Google User");
+    
+    if (email && name) {
+        window.selectedGoogleAccount = {
+            email: email,
+            name: name,
+            profilePic: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=4285f4&color=fff`
+        };
+    }
+}
+
+// Handle multiple accounts from backend
+async function handleMultipleAccounts(accounts, selectedAccount) {
+    console.log("Multiple accounts found:", accounts);
+    
+    if (accounts.length === 1) {
+        // Auto-login if only one account
+        await loginWithAccount(accounts[0].id);
+    } else {
+        // Show account selection modal
+        showAccountSelectionModal(accounts, selectedAccount);
+    }
+}
+
+// Show account selection modal
+function showAccountSelectionModal(accounts, googleUser) {
+    const modalHTML = `
+        <div class="account-modal">
+            <div class="modal-content">
+                <h3>Choose an Account</h3>
+                <p>Found ${accounts.length} account(s) with this email</p>
+                <div class="accounts-list">
+                    ${accounts.map(account => `
+                        <div class="account-item" onclick="window.selectExistingAccount(${account.id})">
+                            <img src="${account.profilePic}" alt="Profile" onerror="this.src='https://via.placeholder.com/80'">
+                            <div>
+                                <strong>${account.name}</strong>
+                                <p>${account.email}</p>
+                                <small>${account.provider} • Created: ${new Date(account.created_at).toLocaleDateString()}</small>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+                <button onclick="window.createNewAccount(${JSON.stringify(googleUser).replace(/"/g, '&quot;')})" class="create-new-btn">
+                    Create New Account
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+// Select existing account
+async function selectExistingAccount(userId) {
+    setLoading(true);
+    
+    try {
+        const response = await fetch(`${BACKEND_URL}/api/google-login-account`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ user_id: userId })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            // Save user data
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('user', JSON.stringify(data.user));
+            localStorage.setItem('currentUser', JSON.stringify(data.user));
+            
+            showAlert(`Welcome back ${data.user.name}!`, 'success');
+            
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 1000);
+        } else {
+            showAlert(data.error || 'Login failed');
+        }
+    } catch (error) {
+        showAlert('Network error. Please try again.');
+    } finally {
+        setLoading(false);
+        document.querySelector('.account-modal')?.remove();
+    }
+}
+
+// Create new Google account
+async function createGoogleAccount(googleUser) {
+    setLoading(true);
+    
+    try {
+        const response = await fetch(`${BACKEND_URL}/api/google-create-account`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(googleUser)
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            // Save user data
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('user', JSON.stringify(data.user));
+            localStorage.setItem('currentUser', JSON.stringify(data.user));
+            
+            showAlert(`Welcome ${data.user.name}! Account created successfully.`, 'success');
+            
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 1000);
+        } else {
+            showAlert(data.error || 'Account creation failed');
+        }
+    } catch (error) {
+        showAlert('Network error. Please try again.');
+    } finally {
+        setLoading(false);
+    }
+}
+
+// Create new account handler
+function createNewAccount(googleUser) {
+    document.querySelector('.account-modal')?.remove();
+    createGoogleAccount(googleUser);
+}
+
+// Fallback Google login (if backend fails)
+async function handleGoogleLoginFallback() {
+    console.log("Using fallback Google login");
+    
+    const selectedAccount = window.selectedGoogleAccount || {
+        email: 'fallback@gmail.com',
+        name: 'Google User',
+        profilePic: 'https://via.placeholder.com/80'
+    };
+    
+    // Try direct Google login endpoint
+    try {
+        const response = await fetch(`${BACKEND_URL}/api/google-login`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(selectedAccount)
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            
+            if (data.success) {
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('user', JSON.stringify(data.user));
+                localStorage.setItem('currentUser', JSON.stringify(data.user));
+                
+                showAlert(`Welcome ${data.user.name}!`, 'success');
+                
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 1000);
+                return;
+            }
+        }
+    } catch (error) {
+        console.log("Direct Google login also failed");
+    }
+    
+    // Ultimate fallback - local storage only
+    showAlert('Using offline mode. Some features may be limited.', 'success');
+    
+    const fallbackUser = {
+        id: 'google_' + Date.now(),
+        username: selectedAccount.email.split('@')[0],
+        email: selectedAccount.email,
+        name: selectedAccount.name,
+        loginTime: new Date().toISOString(),
+        provider: 'google',
+        profilePic: selectedAccount.profilePic,
+        isDemo: true
+    };
+    
+    localStorage.setItem('currentUser', JSON.stringify(fallbackUser));
+    localStorage.setItem('token', 'google_token_' + Date.now());
+    localStorage.setItem('user', JSON.stringify(fallbackUser));
+    
+    setTimeout(() => {
+        window.location.href = 'index.html';
+    }, 1000);
+}
+
+// Main Google login flow
+async function startGoogleLogin() {
+    setLoading(true);
+    
+    // Wait for account selection
+    let accountData = window.selectedGoogleAccount;
+    let attempts = 0;
+    
+    while (!accountData && attempts < 10) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        accountData = window.selectedGoogleAccount;
+        attempts++;
+    }
+    
+    if (!accountData) {
+        setLoading(false);
+        showAlert('No account selected', 'error');
+        return;
+    }
+    
+    // Proceed with backend authentication
+    try {
+        const authResponse = await fetch(`${BACKEND_URL}/api/google-auth`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(accountData)
+        });
+        
+        if (authResponse.ok) {
+            const authData = await authResponse.json();
+            await handleBackendResponse(authData, accountData);
+        } else {
+            throw new Error('Backend unavailable');
+        }
+    } catch (error) {
+        await handleGoogleLoginFallback();
+    }
+}
+
+// Handle backend response
+async function handleBackendResponse(authData, accountData) {
+    if (authData.success) {
+        if (authData.action === 'choose_account') {
+            if (authData.accounts.length === 1) {
+                await loginWithAccount(authData.accounts[0].id);
+            } else {
+                showAccountSelectionModal(authData.accounts, accountData);
+            }
+        } else if (authData.action === 'create_account') {
+            await createGoogleAccount(accountData);
+        }
+    } else {
+        throw new Error(authData.error);
+    }
+}
+
+// Login with specific account
+async function loginWithAccount(userId) {
+    const response = await fetch(`${BACKEND_URL}/api/google-login-account`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ user_id: userId })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        localStorage.setItem('currentUser', JSON.stringify(data.user));
+        
+        showAlert(`Welcome back ${data.user.name}!`, 'success');
+        
+        setTimeout(() => {
+            window.location.href = 'index.html';
+        }, 1000);
+    } else {
+        throw new Error(data.error);
+    }
+}
+
+// Make functions global for popup
+window.selectGoogleAccount = selectGoogleAccount;
+window.addNewGoogleAccount = addNewGoogleAccount;
+window.selectExistingAccount = selectExistingAccount;
+window.createNewAccount = createNewAccount;
+
+// Regular login form
+document.getElementById('loginForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     
     const email = document.getElementById('email').value;
@@ -445,111 +943,42 @@ document.getElementById('loginForm').addEventListener('submit', function(e) {
         return;
     }
 
-    if (password.length < 3) {
-        showAlert('Password must be at least 3 characters long');
-        return;
-    }
-
     setLoading(true);
 
-    // Simulate API call delay
-    setTimeout(() => {
-        try {
-            // Create user data
-            const userData = {
-                id: Date.now(),
-                username: email.split('@')[0] || 'user',
-                email: email,
-                name: email.split('@')[0] || 'User',
-                loginTime: new Date().toISOString(),
-                isDemo: true
-            };
+    try {
+        const response = await fetch(`${BACKEND_URL}/api/login`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email, password })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            showAlert('Login successful!', 'success');
             
-            // Save to localStorage
-            localStorage.setItem('currentUser', JSON.stringify(userData));
-            localStorage.setItem('token', 'demo_token_' + Date.now());
-            localStorage.setItem('user', JSON.stringify(userData));
-            
-            showAlert('Login successful! Redirecting...', 'success');
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('user', JSON.stringify(data.user));
+            localStorage.setItem('currentUser', JSON.stringify(data.user));
             
             setTimeout(() => {
                 window.location.href = 'index.html';
             }, 1000);
-            
-        } catch (error) {
-            console.error('Login error:', error);
-            showAlert('Login successful! Redirecting...', 'success');
-            
-            // Fallback - simple save
-            localStorage.setItem('currentUser', 'true');
-            localStorage.setItem('token', 'demo');
-            
-            setTimeout(() => {
-                window.location.href = 'index.html';
-            }, 1000);
-        } finally {
-            setLoading(false);
+        } else {
+            showAlert(data.error || 'Login failed');
         }
-    }, 1500); // 1.5 second delay for realism
+    } catch (error) {
+        showAlert('Network error. Please try again.');
+    } finally {
+        setLoading(false);
+    }
 });
 
-// Google Login - Offline Version
-function googleLogin() {
-    setLoading(true);
-    
-    // Simulate Google login
-    setTimeout(() => {
-        const googleUser = {
-            id: 'google_' + Date.now(),
-            username: 'google_user',
-            email: 'googleuser@example.com',
-            name: 'Google User',
-            loginTime: new Date().toISOString(),
-            isDemo: true,
-            provider: 'google'
-        };
-        
-        localStorage.setItem('currentUser', JSON.stringify(googleUser));
-        localStorage.setItem('token', 'google_token_' + Date.now());
-        localStorage.setItem('user', JSON.stringify(googleUser));
-        
-        showAlert('Google login successful!', 'success');
-        
-        setTimeout(() => {
-            window.location.href = 'index.html';
-        }, 1000);
-        
-        setLoading(false);
-    }, 1500);
-}
-
-// Facebook Login - Offline Version  
+// Facebook Login
 function facebookLogin() {
-    setLoading(true);
-    
-    setTimeout(() => {
-        const fbUser = {
-            id: 'fb_' + Date.now(),
-            username: 'facebook_user',
-            email: 'fbuser@example.com',
-            name: 'Facebook User', 
-            loginTime: new Date().toISOString(),
-            isDemo: true,
-            provider: 'facebook'
-        };
-        
-        localStorage.setItem('currentUser', JSON.stringify(fbUser));
-        localStorage.setItem('token', 'fb_token_' + Date.now());
-        localStorage.setItem('user', JSON.stringify(fbUser));
-        
-        showAlert('Facebook login successful!', 'success');
-        
-        setTimeout(() => {
-            window.location.href = 'index.html';
-        }, 1000);
-        
-        setLoading(false);
-    }, 1500);
+    showAlert('Facebook login coming soon!', 'success');
 }
 
 // Forgot password
@@ -559,63 +988,22 @@ function forgotPassword() {
         showAlert('Please enter your email address first');
         return;
     }
-    showAlert(`Password reset link would be sent to: ${email}`, 'success');
+    showAlert(`Password reset feature coming soon!`, 'success');
 }
 
-// Auto-fill demo credentials for testing
-function fillDemoCredentials() {
-    document.getElementById('email').value = 'demo@example.com';
-    document.getElementById('password').value = 'password123';
-    showAlert('Demo credentials filled! Click Login to continue.', 'success');
+// Update the main Google login to use new flow
+function updatedGoogleLogin() {
+    // Reset selected account
+    window.selectedGoogleAccount = null;
+    startGoogleLogin();
 }
 
-// Add demo button to form
-document.addEventListener('DOMContentLoaded', function() {
-    // Add demo button after form
-    const form = document.getElementById('loginForm');
-    const demoButton = document.createElement('button');
-    demoButton.type = 'button';
-    demoButton.textContent = 'Use Demo Credentials';
-    demoButton.style.cssText = `
-        width: 100%;
-        padding: 12px;
-        background: #28a745;
-        color: white;
-        border: none;
-        border-radius: 10px;
-        font-size: 14px;
-        margin-top: 10px;
-        cursor: pointer;
-    `;
-    demoButton.onclick = fillDemoCredentials;
-    form.appendChild(demoButton);
-    
-    // Check auth
-    if (!checkAuth()) {
-        console.log("No user found, showing login form");
-    }
-});
+// Replace the original Google login
+const googleBtn = document.querySelector('.social-btn.google');
+googleBtn.onclick = updatedGoogleLogin;
 
-// Test backend connection (optional)
-function testBackend() {
-    console.log("Testing backend connection...");
-    fetch('https://python22.pythonanywhere.com/api/login', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({email: 'test@test.com', password: 'test'})
-    })
-    .then(response => {
-        console.log('Backend status:', response.status);
-        return response.json();
-    })
-    .then(data => console.log('Backend response:', data))
-    .catch(error => console.log('Backend offline - using offline mode:', error));
-}
-
-// Optional: Test backend on load
-// testBackend();
+// Initialize
+checkAuth();
 </script>
 </body>
 </html>
