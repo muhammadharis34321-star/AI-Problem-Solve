@@ -8,6 +8,110 @@
     <link rel="stylesheet" href="style.css" />
     <link rel="icon" type="image/x-icon" href="https://cdn-icons-png.flaticon.com/512/4712/4712035.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style>
+      /* Guest Counter Styles */
+      .guest-counter {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 15px;
+        border-radius: 10px;
+        margin: 20px 0;
+        text-align: center;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      }
+
+      .counter-info {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        margin-bottom: 10px;
+        font-size: 16px;
+        font-weight: 600;
+      }
+
+      .counter-info i {
+        font-size: 20px;
+      }
+
+      .progress-bar {
+        width: 100%;
+        height: 8px;
+        background: rgba(255,255,255,0.3);
+        border-radius: 4px;
+        overflow: hidden;
+        margin: 12px 0;
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: #4CAF50;
+        transition: width 0.3s ease;
+        border-radius: 4px;
+      }
+
+      .login-prompt {
+        margin-top: 12px;
+        font-size: 14px;
+      }
+
+      .login-link {
+        color: #FFEB3B;
+        text-decoration: none;
+        font-weight: bold;
+        padding: 8px 16px;
+        border: 2px solid #FFEB3B;
+        border-radius: 20px;
+        transition: all 0.3s ease;
+      }
+
+      .login-link:hover {
+        background: #FFEB3B;
+        color: #333;
+        text-decoration: none;
+      }
+
+      /* Limit Exceeded Styles */
+      .limit-exceeded {
+        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+        margin: 20px 0;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      }
+
+      .limit-exceeded h4 {
+        margin: 0 0 12px 0;
+        font-size: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+      }
+
+      .limit-exceeded p {
+        margin: 0 0 15px 0;
+        font-size: 14px;
+      }
+
+      /* Input container when limit exceeded */
+      .input-disabled {
+        opacity: 0.6;
+        pointer-events: none;
+      }
+
+      .limit-warning {
+        background: #fff3cd;
+        color: #856404;
+        padding: 10px 15px;
+        border-radius: 5px;
+        margin: 10px 0;
+        border-left: 4px solid #ffc107;
+        font-size: 14px;
+      }
+    </style>
   </head>
   <body>
     <div class="app-container">
@@ -86,11 +190,45 @@
             <p>
               How can I help you today? I can assist with problem solving and much more!
             </p>
+            <!-- Guest Message Counter -->
+            <div class="guest-counter" id="guestCounter" style="display: none;">
+              <div class="counter-info">
+                <i class="fas fa-info-circle"></i>
+                <span>Guest User: <span id="remainingMessages">3</span> messages remaining</span>
+              </div>
+              <div class="counter-progress">
+                <div class="progress-bar">
+                  <div class="progress-fill" id="progressFill" style="width: 100%"></div>
+                </div>
+              </div>
+              <div class="login-prompt">
+                <a href="login.html" class="login-link">
+                  <i class="fas fa-sign-in-alt"></i> Login for unlimited messages
+                </a>
+              </div>
+            </div>
           </div>
           <div class="messages-container" id="messagesContainer"></div>
+          
+          <!-- Limit Exceeded Message -->
+          <div class="limit-exceeded" id="limitExceeded" style="display: none;">
+            <h4>
+              <i class="fas fa-exclamation-triangle"></i> Message Limit Reached
+            </h4>
+            <p>You've used all 3 free messages. Please login to continue chatting with AI.</p>
+            <a href="login.html" class="login-link">
+              <i class="fas fa-sign-in-alt"></i> Login Now
+            </a>
+          </div>
         </div>
 
-        <div class="input-container">
+        <div class="input-container" id="inputContainer">
+          <!-- Limit Warning -->
+          <div class="limit-warning" id="limitWarning" style="display: none;">
+            <i class="fas fa-exclamation-circle"></i>
+            <span>You have <span id="warningCount">1</span> message(s) left. Login for unlimited access.</span>
+          </div>
+          
           <div class="image-upload">
             <input
               type="file"
@@ -242,16 +380,106 @@ document.addEventListener('DOMContentLoaded', function() {
     
     console.log("Auth status - Token:", !!token, "User:", !!currentUser);
     
-    // If no authentication, redirect to login
-    if (!token || !currentUser) {
-        console.log("No authentication found, redirecting to login...");
-        window.location.href = "login.html";
-        return;
+    // If user is logged in, show normal app
+    if (token && currentUser) {
+        console.log("User authenticated, loading app...");
+        initializeApp();
+    } else {
+        // If guest user, show guest interface
+        console.log("Guest user detected, showing guest interface...");
+        showGuestInterface();
+        initializeApp();
     }
-    
-    console.log("User authenticated, loading app...");
-    initializeApp();
 });
+
+// Show guest interface with message limit
+async function showGuestInterface() {
+    try {
+        // Check guest message limit from backend
+        const response = await fetch('/api/check-guest-limit', {
+            method: 'GET',
+            credentials: 'include' // Important for sessions
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            updateGuestCounter(data);
+        } else {
+            // If API fails, assume guest with 3 messages
+            updateGuestCounter({ is_guest: true, remaining_messages: 3 });
+        }
+    } catch (error) {
+        console.log('Guest limit check failed, using default:', error);
+        updateGuestCounter({ is_guest: true, remaining_messages: 3 });
+    }
+}
+
+// Update guest counter display
+function updateGuestCounter(data) {
+    const guestCounter = document.getElementById('guestCounter');
+    const limitExceeded = document.getElementById('limitExceeded');
+    const inputContainer = document.getElementById('inputContainer');
+    const limitWarning = document.getElementById('limitWarning');
+    const warningCount = document.getElementById('warningCount');
+    
+    if (data.is_guest) {
+        const remaining = data.remaining_messages;
+        
+        if (remaining <= 0) {
+            // Show limit exceeded message
+            guestCounter.style.display = 'none';
+            limitExceeded.style.display = 'block';
+            inputContainer.classList.add('input-disabled');
+            limitWarning.style.display = 'none';
+        } else {
+            // Show guest counter
+            guestCounter.style.display = 'block';
+            limitExceeded.style.display = 'none';
+            inputContainer.classList.remove('input-disabled');
+            
+            // Update counter display
+            document.getElementById('remainingMessages').textContent = remaining;
+            const percentage = (remaining / 3) * 100;
+            document.getElementById('progressFill').style.width = `${percentage}%`;
+            
+            // Update progress bar color
+            const progressFill = document.getElementById('progressFill');
+            if (remaining === 1) {
+                progressFill.style.background = '#ff9800';
+                limitWarning.style.display = 'flex';
+                warningCount.textContent = '1';
+            } else if (remaining === 2) {
+                progressFill.style.background = '#ffeb3b';
+                limitWarning.style.display = 'flex';
+                warningCount.textContent = '2';
+            } else {
+                progressFill.style.background = '#4CAF50';
+                limitWarning.style.display = 'none';
+            }
+        }
+    } else {
+        // User is logged in, hide guest elements
+        guestCounter.style.display = 'none';
+        limitExceeded.style.display = 'none';
+        limitWarning.style.display = 'none';
+        inputContainer.classList.remove('input-disabled');
+    }
+}
+
+// Check guest limit periodically
+async function checkGuestLimit() {
+    try {
+        const response = await fetch('/api/check-guest-limit', {
+            credentials: 'include'
+        });
+        if (response.ok) {
+            const data = await response.json();
+            updateGuestCounter(data);
+        }
+    } catch (error) {
+        console.log('Guest limit check failed:', error);
+    }
+}
 
 // Logout function
 function logout() {
@@ -334,36 +562,107 @@ function initializeApp() {
     console.log("App initialized successfully!");
 }
 
-// Basic chat functions
-function sendMessage() {
+// Updated sendMessage function with guest limit check
+async function sendMessage() {
     const userInput = document.getElementById('userInput');
     const message = userInput.value.trim();
     
-    if(message) {
-        console.log("Sending message:", message);
-        // Add your AI integration here
-        userInput.value = '';
-        
-        // Auto-response simulation
-        setTimeout(() => {
-            const responses = [
-                "I understand your question about: " + message,
-                "That's an interesting point about: " + message,
-                "Let me help you with: " + message,
-                "I can assist you with that!"
-            ];
-            const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-            console.log("AI Response:", randomResponse);
-        }, 1000);
+    if(!message) return;
+    
+    // Check if user is guest and has reached limit
+    const guestCounter = document.getElementById('guestCounter');
+    if (guestCounter.style.display !== 'none') {
+        const remaining = parseInt(document.getElementById('remainingMessages').textContent);
+        if (remaining <= 0) {
+            alert('You have reached the message limit. Please login to continue.');
+            return;
+        }
     }
+    
+    console.log("Sending message:", message);
+    
+    try {
+        // Send message to backend API
+        const response = await fetch('/api/chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+                message: message,
+                conversation_id: 'default'
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            // Add message to chat
+            addMessageToChat(message, 'user');
+            addMessageToChat(data.response, 'ai');
+            
+            // Update guest counter after successful message
+            if (data.remaining_messages !== 'unlimited') {
+                updateGuestCounter({
+                    is_guest: true,
+                    remaining_messages: data.remaining_messages
+                });
+            }
+        } else {
+            if (data.limit_exceeded) {
+                // Show limit exceeded
+                updateGuestCounter({
+                    is_guest: true,
+                    remaining_messages: 0
+                });
+                alert('Message limit reached! Please login to continue.');
+            } else {
+                alert('Error: ' + (data.error || 'Failed to send message'));
+            }
+        }
+    } catch (error) {
+        console.error('Error sending message:', error);
+        // Fallback: Add message to chat even if API fails
+        addMessageToChat(message, 'user');
+        setTimeout(() => {
+            addMessageToChat("I understand: " + message, 'ai');
+        }, 1000);
+        
+        // Simulate message count decrease for guest
+        setTimeout(checkGuestLimit, 500);
+    }
+    
+    userInput.value = '';
+}
+
+// Helper function to add messages to chat
+function addMessageToChat(message, sender) {
+    const messagesContainer = document.getElementById('messagesContainer');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${sender}-message`;
+    messageDiv.textContent = message;
+    messagesContainer.appendChild(messageDiv);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
 function clearChatHistory() {
     if(confirm('Are you sure you want to clear all chat history?')) {
         console.log("Chat history cleared");
+        const messagesContainer = document.getElementById('messagesContainer');
+        messagesContainer.innerHTML = '';
         alert('Chat history cleared!');
     }
 }
+
+// Check guest limit when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Initial check
+    setTimeout(checkGuestLimit, 1000);
+    
+    // Check every 30 seconds
+    setInterval(checkGuestLimit, 30000);
+});
 </script>
     <script src="script.js"></script>
   </body>
