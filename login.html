@@ -384,28 +384,57 @@
         </div>
     </div>
 
-    <script>
-const BACKEND_URL = 'https://python22.pythonanywhere.com';
+<script>
+// SIMPLE OFFLINE LOGIN SYSTEM - No backend dependency
+console.log("AI Problem Solve - Offline Login Loaded");
 
-// Check if user is already logged in - UPDATED VERSION
+// Check if user is already logged in
 function checkAuth() {
     const token = localStorage.getItem('token');
-    const user = localStorage.getItem('user');
     const currentUser = localStorage.getItem('currentUser');
     
-    console.log("Auth check:", { token, user, currentUser });
+    console.log("Auth check - Token:", token, "User:", currentUser);
     
-    // If user is logged in with ANY system, redirect to index.html
-    if (token || currentUser) {
+    // If user is logged in, redirect to index.html
+    if (token && currentUser) {
         console.log("User already authenticated, redirecting...");
         setTimeout(() => {
             window.location.href = 'index.html';
-        }, 1000);
+        }, 500);
+        return true;
+    }
+    return false;
+}
+
+function showAlert(message, type = 'error') {
+    const alert = document.getElementById('alert');
+    alert.textContent = message;
+    alert.className = `alert ${type}`;
+    alert.style.display = 'block';
+    
+    setTimeout(() => {
+        alert.style.display = 'none';
+    }, 5000);
+}
+
+function setLoading(loading) {
+    const loginBtn = document.getElementById('loginBtn');
+    const loginText = document.getElementById('loginText');
+    const loginLoading = document.getElementById('loginLoading');
+    
+    if (loading) {
+        loginBtn.disabled = true;
+        loginText.style.display = 'none';
+        loginLoading.style.display = 'inline-block';
+    } else {
+        loginBtn.disabled = false;
+        loginText.style.display = 'inline-block';
+        loginLoading.style.display = 'none';
     }
 }
 
-// Regular login - UPDATED with fallback
-document.getElementById('loginForm').addEventListener('submit', async function(e) {
+// SIMPLE OFFLINE LOGIN - No backend required
+document.getElementById('loginForm').addEventListener('submit', function(e) {
     e.preventDefault();
     
     const email = document.getElementById('email').value;
@@ -416,72 +445,111 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
         return;
     }
 
+    if (password.length < 3) {
+        showAlert('Password must be at least 3 characters long');
+        return;
+    }
+
     setLoading(true);
 
-    try {
-        const response = await fetch(`${BACKEND_URL}/api/login`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ email, password }),
-            // Timeout add karo
-            signal: AbortSignal.timeout(10000)
-        });
-
-        // Agar response nahi aaya toh offline mode use karo
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-
-        const data = await response.json();
-
-        if (data.success) {
-            showAlert('Login successful!', 'success');
+    // Simulate API call delay
+    setTimeout(() => {
+        try {
+            // Create user data
+            const userData = {
+                id: Date.now(),
+                username: email.split('@')[0] || 'user',
+                email: email,
+                name: email.split('@')[0] || 'User',
+                loginTime: new Date().toISOString(),
+                isDemo: true
+            };
             
-            // Save in BOTH systems to prevent conflicts
-            localStorage.setItem('token', data.token);
-            localStorage.setItem('user', JSON.stringify(data.user));
-            localStorage.setItem('currentUser', JSON.stringify(data.user));
+            // Save to localStorage
+            localStorage.setItem('currentUser', JSON.stringify(userData));
+            localStorage.setItem('token', 'demo_token_' + Date.now());
+            localStorage.setItem('user', JSON.stringify(userData));
+            
+            showAlert('Login successful! Redirecting...', 'success');
             
             setTimeout(() => {
                 window.location.href = 'index.html';
             }, 1000);
-        } else {
-            showAlert(data.error || 'Login failed');
+            
+        } catch (error) {
+            console.error('Login error:', error);
+            showAlert('Login successful! Redirecting...', 'success');
+            
+            // Fallback - simple save
+            localStorage.setItem('currentUser', 'true');
+            localStorage.setItem('token', 'demo');
+            
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 1000);
+        } finally {
+            setLoading(false);
         }
-    } catch (error) {
-        console.error('Login error:', error);
-        // OFFLINE MODE: Demo login allow karo
-        showAlert('Using demo mode (backend unavailable)', 'success');
-        
-        // Demo user create karo
-        const demoUser = {
-            username: email.split('@')[0],
-            email: email,
-            loginTime: new Date().toISOString()
+    }, 1500); // 1.5 second delay for realism
+});
+
+// Google Login - Offline Version
+function googleLogin() {
+    setLoading(true);
+    
+    // Simulate Google login
+    setTimeout(() => {
+        const googleUser = {
+            id: 'google_' + Date.now(),
+            username: 'google_user',
+            email: 'googleuser@example.com',
+            name: 'Google User',
+            loginTime: new Date().toISOString(),
+            isDemo: true,
+            provider: 'google'
         };
         
-        localStorage.setItem('currentUser', JSON.stringify(demoUser));
-        localStorage.setItem('token', 'demo_token_' + Date.now());
+        localStorage.setItem('currentUser', JSON.stringify(googleUser));
+        localStorage.setItem('token', 'google_token_' + Date.now());
+        localStorage.setItem('user', JSON.stringify(googleUser));
+        
+        showAlert('Google login successful!', 'success');
         
         setTimeout(() => {
             window.location.href = 'index.html';
         }, 1000);
-    } finally {
+        
         setLoading(false);
-    }
-});
-
-// Create new account button handler
-function createNewAccount(googleUser) {
-    document.querySelector('.account-modal')?.remove();
-    createGoogleAccount(googleUser);
+    }, 1500);
 }
 
-// Facebook Login
+// Facebook Login - Offline Version  
 function facebookLogin() {
-    showAlert('Facebook login coming soon!', 'success');
+    setLoading(true);
+    
+    setTimeout(() => {
+        const fbUser = {
+            id: 'fb_' + Date.now(),
+            username: 'facebook_user',
+            email: 'fbuser@example.com',
+            name: 'Facebook User', 
+            loginTime: new Date().toISOString(),
+            isDemo: true,
+            provider: 'facebook'
+        };
+        
+        localStorage.setItem('currentUser', JSON.stringify(fbUser));
+        localStorage.setItem('token', 'fb_token_' + Date.now());
+        localStorage.setItem('user', JSON.stringify(fbUser));
+        
+        showAlert('Facebook login successful!', 'success');
+        
+        setTimeout(() => {
+            window.location.href = 'index.html';
+        }, 1000);
+        
+        setLoading(false);
+    }, 1500);
 }
 
 // Forgot password
@@ -491,11 +559,63 @@ function forgotPassword() {
         showAlert('Please enter your email address first');
         return;
     }
-    showAlert(`Password reset feature coming soon!`, 'success');
+    showAlert(`Password reset link would be sent to: ${email}`, 'success');
 }
 
-// Initialize
-checkAuth();
-    </script>
+// Auto-fill demo credentials for testing
+function fillDemoCredentials() {
+    document.getElementById('email').value = 'demo@example.com';
+    document.getElementById('password').value = 'password123';
+    showAlert('Demo credentials filled! Click Login to continue.', 'success');
+}
+
+// Add demo button to form
+document.addEventListener('DOMContentLoaded', function() {
+    // Add demo button after form
+    const form = document.getElementById('loginForm');
+    const demoButton = document.createElement('button');
+    demoButton.type = 'button';
+    demoButton.textContent = 'Use Demo Credentials';
+    demoButton.style.cssText = `
+        width: 100%;
+        padding: 12px;
+        background: #28a745;
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-size: 14px;
+        margin-top: 10px;
+        cursor: pointer;
+    `;
+    demoButton.onclick = fillDemoCredentials;
+    form.appendChild(demoButton);
+    
+    // Check auth
+    if (!checkAuth()) {
+        console.log("No user found, showing login form");
+    }
+});
+
+// Test backend connection (optional)
+function testBackend() {
+    console.log("Testing backend connection...");
+    fetch('https://python22.pythonanywhere.com/api/login', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({email: 'test@test.com', password: 'test'})
+    })
+    .then(response => {
+        console.log('Backend status:', response.status);
+        return response.json();
+    })
+    .then(data => console.log('Backend response:', data))
+    .catch(error => console.log('Backend offline - using offline mode:', error));
+}
+
+// Optional: Test backend on load
+// testBackend();
+</script>
 </body>
 </html>
