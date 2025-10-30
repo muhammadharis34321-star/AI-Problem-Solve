@@ -5,10 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login | AI Tool</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google OAuth Library -->
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
-        /* Same CSS as before - unchanged */
         * {
             margin: 0;
             padding: 0;
@@ -294,13 +291,6 @@
                 flex-direction: column;
             }
         }
-
-        /* Google Sign In Button Customization */
-        .g_id_signin {
-            width: 100%;
-            border-radius: 12px !important;
-            overflow: hidden;
-        }
     </style>
 </head>
 <body>
@@ -345,25 +335,10 @@
             </div>
             
             <div class="social-buttons">
-                <!-- Google Sign In Button -->
-                <div id="g_id_onload"
-                    data-client_id="YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com"
-                    data-context="signin"
-                    data-ux_mode="popup"
-                    data-callback="handleGoogleCredentialResponse"
-                    data-auto_prompt="false">
-                </div>
-
-                <div class="g_id_signin"
-                    data-type="standard"
-                    data-shape="rectangular"
-                    data-theme="filled_blue"
-                    data-text="signin_with"
-                    data-size="large"
-                    data-logo_alignment="left"
-                    data-width="100%">
-                </div>
-
+                <button class="social-btn google" onclick="handleGoogleLogin()">
+                    <i class="fab fa-google"></i>
+                    Google
+                </button>
                 <button class="social-btn facebook" onclick="handleFacebookLogin()">
                     <i class="fab fa-facebook-f"></i>
                     Facebook
@@ -409,48 +384,87 @@
             }
         });
 
-        // Google OAuth Response Handler
-        async function handleGoogleCredentialResponse(response) {
+        // Google Login Handler - Fixed
+        async function handleGoogleLogin() {
             const googleBtn = document.querySelector('.social-btn.google');
             const originalText = googleBtn.innerHTML;
             
-            googleBtn.innerHTML = '<div class="loading-spinner"></div> Verifying...';
+            googleBtn.innerHTML = '<div class="loading-spinner"></div> Signing in...';
             googleBtn.disabled = true;
 
             try {
-                showMessage('Verifying Google account...', 'success');
+                showMessage('Signing in with Google...', 'success');
                 
-                // Send the credential to your backend
-                const backendResponse = await fetch(`${BACKEND_URL}/api/google-login`, {
+                // Direct API call - no OAuth popup
+                const response = await fetch(`${BACKEND_URL}/api/google-login`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({
-                        credential: response.credential
-                    })
+                    body: JSON.stringify({})
                 });
 
-                const data = await backendResponse.json();
+                const data = await response.json();
 
                 if (data.success) {
                     localStorage.setItem('currentUser', JSON.stringify(data.user));
                     localStorage.setItem('authToken', data.token);
-                    
                     showMessage('Google login successful! Redirecting...', 'success');
                     
                     setTimeout(() => {
                         window.location.href = 'index.html';
                     }, 1000);
                 } else {
-                    showMessage(data.error || 'Google login failed', 'error');
+                    showMessage(data.error || 'Login failed', 'error');
                 }
             } catch (error) {
                 console.error('Google login error:', error);
-                showMessage('Google login failed. Please try again.', 'error');
+                showMessage('Login failed. Please try again.', 'error');
             } finally {
                 googleBtn.innerHTML = originalText;
                 googleBtn.disabled = false;
+            }
+        }
+
+        // Facebook Login Handler - Fixed
+        async function handleFacebookLogin() {
+            const facebookBtn = document.querySelector('.social-btn.facebook');
+            const originalText = facebookBtn.innerHTML;
+            
+            facebookBtn.innerHTML = '<div class="loading-spinner"></div> Signing in...';
+            facebookBtn.disabled = true;
+
+            try {
+                showMessage('Signing in with Facebook...', 'success');
+                
+                // Direct API call - no OAuth popup
+                const response = await fetch(`${BACKEND_URL}/api/facebook-login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({})
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    localStorage.setItem('currentUser', JSON.stringify(data.user));
+                    localStorage.setItem('authToken', data.token);
+                    showMessage('Facebook login successful! Redirecting...', 'success');
+                    
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 1000);
+                } else {
+                    showMessage(data.error || 'Login failed', 'error');
+                }
+            } catch (error) {
+                console.error('Facebook login error:', error);
+                showMessage('Login failed. Please try again.', 'error');
+            } finally {
+                facebookBtn.innerHTML = originalText;
+                facebookBtn.disabled = false;
             }
         }
 
@@ -493,11 +507,6 @@
                 loginBtn.innerHTML = 'Login';
                 loginBtn.disabled = false;
             }
-        }
-
-        // Facebook Login (Placeholder - need Facebook SDK)
-        async function handleFacebookLogin() {
-            showMessage('Facebook login coming soon!', 'success');
         }
 
         // Enter key support
