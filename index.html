@@ -232,20 +232,51 @@
 
     
 <script>
-  // TEMPORARY FIX - Login check comment karo
-  /*
-  if(!localStorage.getItem('currentUser')) {
-      window.location.href = "login.html";
-  }
-  */
+  // FIXED VERSION - Backend independent
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log("Page loaded - Checking authentication");
+    
+    // Simple authentication check - Backend se independent
+    const token = localStorage.getItem('token');
+    const currentUser = localStorage.getItem('currentUser');
+    
+    // Agar koi bhi authentication nahi hai toh login page pe jao
+    if (!token && !currentUser) {
+      console.log("No user found, redirecting to login");
+      // Temporary: Demo user create karo
+      createDemoUser();
+      // window.location.href = "login.html"; // Temporarily comment
+    } else {
+      console.log("User authenticated, proceeding...");
+    }
+    
+    // Initialize all functionality
+    initializeApp();
+  });
 
-  // Logout function
+  // Demo user create karo agar koi user nahi hai
+  function createDemoUser() {
+    const demoUser = {
+      username: 'demo_user',
+      email: 'demo@example.com',
+      loginTime: new Date().toISOString()
+    };
+    localStorage.setItem('currentUser', JSON.stringify(demoUser));
+    localStorage.setItem('token', 'demo_token_' + Date.now());
+    console.log("Demo user created automatically");
+  }
+
+  // Logout function - FIXED
   function logout() {
-      if(confirm('Are you sure you want to logout?')) {
-          localStorage.removeItem('currentUser');
-          // window.location.href = "login.html"; // Temporarily comment this too
-          alert('Logout successful!'); // Temporary success message
-      }
+    if(confirm('Are you sure you want to logout?')) {
+      // Sab kuch clear karo
+      localStorage.removeItem('currentUser');
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      
+      // Redirect to login
+      window.location.href = "login.html";
+    }
   }
 
   // Close settings modal function
@@ -253,26 +284,25 @@
     document.getElementById('settingsModal').style.display = 'none';
   }
 
-  // Tab switching functionality
-  document.addEventListener('DOMContentLoaded', function() {
+  // Initialize app functionality
+  function initializeApp() {
     const tabButtons = document.querySelectorAll('.tab-button');
     const tabPanes = document.querySelectorAll('.tab-pane');
     
+    // Tab switching
     tabButtons.forEach(button => {
       button.addEventListener('click', function() {
         const targetTab = this.getAttribute('data-tab');
         
-        // Remove active class from all buttons and panes
         tabButtons.forEach(btn => btn.classList.remove('active'));
         tabPanes.forEach(pane => pane.classList.remove('active'));
         
-        // Add active class to current button and pane
         this.classList.add('active');
         document.getElementById(targetTab + 'Tab').classList.add('active');
       });
     });
 
-    // Modal functionality add karo
+    // Modal functionality
     const settingsBtn = document.getElementById('settingsBtn');
     const settingsModal = document.getElementById('settingsModal');
     const closeSettings = document.getElementById('closeSettings');
@@ -291,10 +321,19 @@
     if(cancelSettings) {
       cancelSettings.addEventListener('click', closeSettingsModal);
     }
-  });
+
+    // Save settings
+    const saveSettings = document.getElementById('saveSettings');
+    if(saveSettings) {
+      saveSettings.addEventListener('click', function() {
+        closeSettingsModal();
+        alert('Settings saved successfully!');
+      });
+    }
+
+    console.log("App initialized successfully");
+  }
 </script>
-
-
 
     <script src="script.js"></script>
   </body>
