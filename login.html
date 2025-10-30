@@ -383,7 +383,6 @@
             Don't have an account? <a href="signup.html">Signup</a>
         </div>
     </div>
-
 <script>
 const BACKEND_URL = 'https://python22.pythonanywhere.com';
 
@@ -429,63 +428,96 @@ function setLoading(loading) {
     }
 }
 
-// SIMPLE GOOGLE ACCOUNT SELECTION WITHOUT POPUP
+// SIMPLE GOOGLE LOGIN - WORKING VERSION
 async function googleLogin() {
     console.log("Starting Google login...");
     
-    // Show account selection directly on page
-    const selectedAccount = await showAccountSelection();
-    
-    if (!selectedAccount) {
-        console.log("No account selected");
-        return;
+    try {
+        // Show simple account selection
+        const accountData = await showSimpleAccountSelection();
+        
+        if (!accountData) {
+            console.log("User cancelled account selection");
+            return;
+        }
+        
+        console.log("Selected account:", accountData);
+        await processGoogleLoginWithBackend(accountData);
+        
+    } catch (error) {
+        console.error('Google login error:', error);
+        showAlert('Login failed. Please try again.', 'error');
     }
-    
-    console.log("Proceeding with account:", selectedAccount);
-    await processGoogleLogin(selectedAccount);
 }
 
-// Show account selection on main page
-function showAccountSelection() {
+// Simple account selection without complex modal
+function showSimpleAccountSelection() {
     return new Promise((resolve) => {
-        // Create account selection modal
-        const modalHTML = `
-            <div class="account-modal" style="display: block;">
-                <div class="modal-content">
-                    <h3>🔐 Sign in with Google</h3>
-                    <p>Choose an account to continue to AI Problem Solve</p>
+        // Create a simple selection interface
+        const selectionHTML = `
+            <div id="googleAccountModal" style="
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+            ">
+                <div style="
+                    background: white;
+                    padding: 30px;
+                    border-radius: 15px;
+                    max-width: 400px;
+                    width: 90%;
+                    max-height: 80vh;
+                    overflow-y: auto;
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+                ">
+                    <h3 style="text-align: center; margin-bottom: 20px; color: #333;">
+                        <span style="color: #4285f4; font-weight: bold;">Google</span> Sign In
+                    </h3>
+                    <p style="text-align: center; margin-bottom: 25px; color: #666;">
+                        Choose an account to continue
+                    </p>
                     
-                    <div class="accounts-list">
-                        <div class="account-item" data-account='{"email":"user1@gmail.com","name":"John Doe","profilePic":"https://ui-avatars.com/api/?name=John+Doe&background=4285f4&color=fff"}'>
-                            <div class="account-avatar">J</div>
-                            <div class="account-info">
-                                <div class="account-name">John Doe</div>
-                                <div class="account-email">user1@gmail.com</div>
+                    <div style="margin-bottom: 20px;">
+                        <div class="account-option" data-account='{"email":"user1@gmail.com","name":"John Doe","profilePic":"https://ui-avatars.com/api/?name=John+Doe&background=4285f4&color=fff"}'
+                             style="padding: 15px; border: 2px solid #e1e1e1; border-radius: 10px; margin-bottom: 10px; cursor: pointer; display: flex; align-items: center;">
+                            <div style="width: 40px; height: 40px; border-radius: 50%; background: #4285f4; color: white; display: flex; align-items: center; justify-content: center; margin-right: 15px; font-weight: bold;">J</div>
+                            <div>
+                                <div style="font-weight: bold; color: #333;">John Doe</div>
+                                <div style="color: #666; font-size: 14px;">user1@gmail.com</div>
                             </div>
                         </div>
                         
-                        <div class="account-item" data-account='{"email":"user2@gmail.com","name":"Jane Smith","profilePic":"https://ui-avatars.com/api/?name=Jane+Smith&background=db4437&color=fff"}'>
-                            <div class="account-avatar">J</div>
-                            <div class="account-info">
-                                <div class="account-name">Jane Smith</div>
-                                <div class="account-email">user2@gmail.com</div>
+                        <div class="account-option" data-account='{"email":"user2@gmail.com","name":"Jane Smith","profilePic":"https://ui-avatars.com/api/?name=Jane+Smith&background=db4437&color=fff"}'
+                             style="padding: 15px; border: 2px solid #e1e1e1; border-radius: 10px; margin-bottom: 10px; cursor: pointer; display: flex; align-items: center;">
+                            <div style="width: 40px; height: 40px; border-radius: 50%; background: #db4437; color: white; display: flex; align-items: center; justify-content: center; margin-right: 15px; font-weight: bold;">J</div>
+                            <div>
+                                <div style="font-weight: bold; color: #333;">Jane Smith</div>
+                                <div style="color: #666; font-size: 14px;">user2@gmail.com</div>
                             </div>
                         </div>
                         
-                        <div class="account-item" data-account='{"email":"developer@gmail.com","name":"Developer Account","profilePic":"https://ui-avatars.com/api/?name=Developer&background=0f9d58&color=fff"}'>
-                            <div class="account-avatar">D</div>
-                            <div class="account-info">
-                                <div class="account-name">Developer Account</div>
-                                <div class="account-email">developer@gmail.com</div>
+                        <div class="account-option" data-account='{"email":"developer@gmail.com","name":"Developer","profilePic":"https://ui-avatars.com/api/?name=Developer&background=0f9d58&color=fff"}'
+                             style="padding: 15px; border: 2px solid #e1e1e1; border-radius: 10px; margin-bottom: 10px; cursor: pointer; display: flex; align-items: center;">
+                            <div style="width: 40px; height: 40px; border-radius: 50%; background: #0f9d58; color: white; display: flex; align-items: center; justify-content: center; margin-right: 15px; font-weight: bold;">D</div>
+                            <div>
+                                <div style="font-weight: bold; color: #333;">Developer</div>
+                                <div style="color: #666; font-size: 14px;">developer@gmail.com</div>
                             </div>
                         </div>
                     </div>
                     
-                    <div style="text-align: center; margin-top: 20px;">
-                        <button onclick="addCustomGoogleAccount()" style="padding: 10px 20px; background: #4285f4; color: white; border: none; border-radius: 5px; cursor: pointer;">
-                            + Use another account
+                    <div style="text-align: center;">
+                        <button onclick="addCustomAccount()" style="padding: 12px 24px; background: #4285f4; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; margin-right: 10px;">
+                            + Another Account
                         </button>
-                        <button onclick="closeAccountModal()" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer; margin-left: 10px;">
+                        <button onclick="closeModal()" style="padding: 12px 24px; background: #6c757d; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px;">
                             Cancel
                         </button>
                     </div>
@@ -493,34 +525,44 @@ function showAccountSelection() {
             </div>
         `;
         
-        // Add modal to page
-        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        // Add to page
+        document.body.insertAdjacentHTML('beforeend', selectionHTML);
         
-        // Add click handlers for account items
+        // Add hover effects
+        const style = document.createElement('style');
+        style.textContent = `
+            .account-option:hover {
+                border-color: #4285f4 !important;
+                background-color: #f8f9ff !important;
+                transform: translateY(-2px);
+                transition: all 0.3s ease;
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // Add click handlers
         setTimeout(() => {
-            const accountItems = document.querySelectorAll('.account-item');
-            accountItems.forEach(item => {
-                item.addEventListener('click', function() {
+            const accountOptions = document.querySelectorAll('.account-option');
+            accountOptions.forEach(option => {
+                option.addEventListener('click', function() {
                     const accountData = JSON.parse(this.getAttribute('data-account'));
-                    closeAccountModal();
+                    closeModal();
                     resolve(accountData);
                 });
             });
         }, 100);
         
-        // Handle cancel
-        window.closeAccountModal = function() {
-            document.querySelector('.account-modal')?.remove();
-            resolve(null);
-        };
-        
         // Handle custom account
-        window.addCustomGoogleAccount = function() {
+        window.addCustomAccount = function() {
             const email = prompt("Enter your Google email:", "newuser@gmail.com");
             if (!email) return;
             
             const name = prompt("Enter your name:", email.split('@')[0] || "Google User");
-            if (!name) return;
+            if (!name) {
+                closeModal();
+                resolve(null);
+                return;
+            }
             
             const customAccount = {
                 email: email,
@@ -528,20 +570,27 @@ function showAccountSelection() {
                 profilePic: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=4285f4&color=fff`
             };
             
-            closeAccountModal();
+            closeModal();
             resolve(customAccount);
+        };
+        
+        // Handle cancel
+        window.closeModal = function() {
+            const modal = document.getElementById('googleAccountModal');
+            if (modal) modal.remove();
+            resolve(null);
         };
     });
 }
 
 // Process Google login with backend
-async function processGoogleLogin(accountData) {
+async function processGoogleLoginWithBackend(accountData) {
     setLoading(true);
     
     try {
         console.log("Sending to backend:", accountData);
         
-        // Step 1: Check account with backend
+        // Step 1: Check with backend
         const authResponse = await fetch(`${BACKEND_URL}/api/google-auth`, {
             method: 'POST',
             headers: {
@@ -559,8 +608,13 @@ async function processGoogleLogin(accountData) {
         
         if (authData.success) {
             if (authData.action === 'choose_account') {
-                // Show backend accounts for selection
-                await showBackendAccounts(authData.accounts, accountData);
+                if (authData.accounts.length === 1) {
+                    // Auto login if only one account
+                    await loginWithAccountId(authData.accounts[0].id);
+                } else {
+                    // Show backend accounts
+                    await showBackendAccountSelection(authData.accounts, accountData);
+                }
             } else if (authData.action === 'create_account') {
                 // Create new account
                 await createGoogleAccount(accountData);
@@ -570,8 +624,7 @@ async function processGoogleLogin(accountData) {
         }
         
     } catch (error) {
-        console.error('Google login error:', error);
-        showAlert('Backend connection failed. Using demo mode.', 'success');
+        console.error('Backend error:', error);
         // Fallback to direct login
         await directGoogleLogin(accountData);
     } finally {
@@ -579,33 +632,59 @@ async function processGoogleLogin(accountData) {
     }
 }
 
-// Show accounts from backend
-async function showBackendAccounts(accounts, originalAccount) {
+// Show backend account selection
+async function showBackendAccountSelection(accounts, originalAccount) {
     return new Promise((resolve) => {
         const modalHTML = `
-            <div class="account-modal" style="display: block;">
-                <div class="modal-content">
-                    <h3>Multiple Accounts Found</h3>
-                    <p>Found ${accounts.length} account(s) with this email</p>
+            <div id="backendAccountModal" style="
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+            ">
+                <div style="
+                    background: white;
+                    padding: 30px;
+                    border-radius: 15px;
+                    max-width: 500px;
+                    width: 90%;
+                    max-height: 80vh;
+                    overflow-y: auto;
+                ">
+                    <h3 style="text-align: center; margin-bottom: 15px; color: #333;">
+                        Multiple Accounts Found
+                    </h3>
+                    <p style="text-align: center; margin-bottom: 20px; color: #666;">
+                        Found ${accounts.length} account(s) with this email
+                    </p>
                     
-                    <div class="accounts-list">
+                    <div style="margin-bottom: 20px;">
                         ${accounts.map(account => `
-                            <div class="account-item" data-account-id="${account.id}">
+                            <div class="backend-account" data-account-id="${account.id}"
+                                 style="padding: 15px; border: 2px solid #e1e1e1; border-radius: 10px; margin-bottom: 10px; cursor: pointer; display: flex; align-items: center;">
                                 <img src="${account.profilePic}" alt="Profile" style="width: 40px; height: 40px; border-radius: 50%; margin-right: 15px;" onerror="this.src='https://via.placeholder.com/80'">
                                 <div>
-                                    <strong>${account.name}</strong>
-                                    <p>${account.email}</p>
-                                    <small>${account.provider} • ${new Date(account.created_at).toLocaleDateString()}</small>
+                                    <div style="font-weight: bold; color: #333;">${account.name}</div>
+                                    <div style="color: #666; font-size: 14px;">${account.email}</div>
+                                    <div style="color: #888; font-size: 12px;">${account.provider} • ${new Date(account.created_at).toLocaleDateString()}</div>
                                 </div>
                             </div>
                         `).join('')}
                     </div>
                     
-                    <div style="text-align: center; margin-top: 20px;">
-                        <button onclick="createNewBackendAccount(${JSON.stringify(originalAccount).replace(/"/g, '&quot;')})" style="padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                    <div style="text-align: center;">
+                        <button onclick="createNewAccount(${JSON.stringify(originalAccount).replace(/"/g, '&quot;')})" 
+                                style="padding: 12px 24px; background: #28a745; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; margin-right: 10px;">
                             Create New Account
                         </button>
-                        <button onclick="closeBackendAccountModal()" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer; margin-left: 10px;">
+                        <button onclick="closeBackendModal()" 
+                                style="padding: 12px 24px; background: #6c757d; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px;">
                             Cancel
                         </button>
                     </div>
@@ -617,25 +696,26 @@ async function showBackendAccounts(accounts, originalAccount) {
         
         // Add click handlers
         setTimeout(() => {
-            const accountItems = document.querySelectorAll('.account-item[data-account-id]');
-            accountItems.forEach(item => {
-                item.addEventListener('click', async function() {
+            const backendAccounts = document.querySelectorAll('.backend-account');
+            backendAccounts.forEach(account => {
+                account.addEventListener('click', async function() {
                     const accountId = this.getAttribute('data-account-id');
-                    closeBackendAccountModal();
+                    closeBackendModal();
                     await loginWithAccountId(accountId);
                     resolve();
                 });
             });
         }, 100);
         
-        window.closeBackendAccountModal = function() {
-            document.querySelector('.account-modal')?.remove();
+        window.createNewAccount = function(accountData) {
+            closeBackendModal();
+            createGoogleAccount(accountData);
             resolve();
         };
         
-        window.createNewBackendAccount = function(accountData) {
-            closeBackendAccountModal();
-            createGoogleAccount(accountData);
+        window.closeBackendModal = function() {
+            const modal = document.getElementById('backendAccountModal');
+            if (modal) modal.remove();
             resolve();
         };
     });
@@ -657,7 +737,6 @@ async function loginWithAccountId(userId) {
         const data = await response.json();
 
         if (data.success) {
-            // Save user data
             localStorage.setItem('token', data.token);
             localStorage.setItem('user', JSON.stringify(data.user));
             localStorage.setItem('currentUser', JSON.stringify(data.user));
@@ -693,7 +772,6 @@ async function createGoogleAccount(accountData) {
         const data = await response.json();
 
         if (data.success) {
-            // Save user data
             localStorage.setItem('token', data.token);
             localStorage.setItem('user', JSON.stringify(data.user));
             localStorage.setItem('currentUser', JSON.stringify(data.user));
@@ -829,73 +907,6 @@ function forgotPassword() {
 
 // Initialize
 checkAuth();
-
-// Add CSS for account selection
-const style = document.createElement('style');
-style.textContent = `
-    .account-modal {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.5);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 1000;
-    }
-    .modal-content {
-        background: white;
-        border-radius: 15px;
-        padding: 30px;
-        max-width: 500px;
-        width: 90%;
-        max-height: 80vh;
-        overflow-y: auto;
-    }
-    .accounts-list {
-        margin: 20px 0;
-    }
-    .account-item {
-        display: flex;
-        align-items: center;
-        padding: 15px;
-        border: 2px solid #e1e1e1;
-        border-radius: 10px;
-        margin-bottom: 10px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-    .account-item:hover {
-        border-color: #667eea;
-        background: #f8f9ff;
-    }
-    .account-avatar {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        background: #4285f4;
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-right: 15px;
-        font-weight: bold;
-    }
-    .account-info {
-        flex: 1;
-    }
-    .account-name {
-        font-weight: bold;
-        color: #333;
-    }
-    .account-email {
-        color: #666;
-        font-size: 14px;
-    }
-`;
-document.head.appendChild(style);
 </script>
 </body>
 </html>
