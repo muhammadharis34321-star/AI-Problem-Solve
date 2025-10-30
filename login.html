@@ -5,9 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login | AI Tool</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google OAuth Library -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
-        /* Same CSS as before */
+        /* Same CSS as before - unchanged */
         * {
             margin: 0;
             padding: 0;
@@ -35,7 +36,6 @@
             box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
         }
 
-    
         .logo {
             text-align: center;
             margin-bottom: 40px;
@@ -295,7 +295,12 @@
             }
         }
 
-        /* ... rest of your CSS same ... */
+        /* Google Sign In Button Customization */
+        .g_id_signin {
+            width: 100%;
+            border-radius: 12px !important;
+            overflow: hidden;
+        }
     </style>
 </head>
 <body>
@@ -340,12 +345,12 @@
             </div>
             
             <div class="social-buttons">
-                <!-- Google Sign In -->
+                <!-- Google Sign In Button -->
                 <div id="g_id_onload"
                     data-client_id="YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com"
                     data-context="signin"
                     data-ux_mode="popup"
-                    data-callback="handleGoogleLogin"
+                    data-callback="handleGoogleCredentialResponse"
                     data-auto_prompt="false">
                 </div>
 
@@ -359,7 +364,6 @@
                     data-width="100%">
                 </div>
 
-                <!-- Facebook Login -->
                 <button class="social-btn facebook" onclick="handleFacebookLogin()">
                     <i class="fab fa-facebook-f"></i>
                     Facebook
@@ -405,13 +409,19 @@
             }
         });
 
-        // Google Login Handler
-        async function handleGoogleLogin(response) {
+        // Google OAuth Response Handler
+        async function handleGoogleCredentialResponse(response) {
+            const googleBtn = document.querySelector('.social-btn.google');
+            const originalText = googleBtn.innerHTML;
+            
+            googleBtn.innerHTML = '<div class="loading-spinner"></div> Verifying...';
+            googleBtn.disabled = true;
+
             try {
-                showMessage('Checking Google account...', 'success');
+                showMessage('Verifying Google account...', 'success');
                 
-                // Send Google token to backend
-                const result = await fetch(`${BACKEND_URL}/api/google-login`, {
+                // Send the credential to your backend
+                const backendResponse = await fetch(`${BACKEND_URL}/api/google-login`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -421,109 +431,27 @@
                     })
                 });
 
-                const data = await result.json();
+                const data = await backendResponse.json();
 
                 if (data.success) {
-                    // Login successful
                     localStorage.setItem('currentUser', JSON.stringify(data.user));
                     localStorage.setItem('authToken', data.token);
+                    
                     showMessage('Google login successful! Redirecting...', 'success');
                     
                     setTimeout(() => {
                         window.location.href = 'index.html';
                     }, 1000);
                 } else {
-                    // Agar Google account nahi bana hai
-                    if (data.error === 'GOOGLE_ACCOUNT_NOT_FOUND') {
-                        showMessage('No Google account found. Please create account first.', 'error');
-                    } else {
-                        showMessage(data.error || 'Google login failed', 'error');
-                    }
+                    showMessage(data.error || 'Google login failed', 'error');
                 }
             } catch (error) {
                 console.error('Google login error:', error);
                 showMessage('Google login failed. Please try again.', 'error');
+            } finally {
+                googleBtn.innerHTML = originalText;
+                googleBtn.disabled = false;
             }
-        }
-
-        // Facebook Login Handler  
-        async function handleFacebookLogin() {
-            // Facebook SDK initialize karo
-            if (!window.FB) {
-                showMessage('Facebook SDK loading...', 'success');
-                await loadFacebookSDK();
-            }
-
-            FB.login(function(response) {
-                if (response.authResponse) {
-                    handleFacebookResponse(response.authResponse.accessToken);
-                } else {
-                    showMessage('Facebook login cancelled', 'error');
-                }
-            }, {scope: 'public_profile,email'});
-        }
-
-        // Facebook Response Handler
-        async function handleFacebookResponse(accessToken) {
-            try {
-                showMessage('Checking Facebook account...', 'success');
-                
-                const result = await fetch(`${BACKEND_URL}/api/facebook-login`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        access_token: accessToken
-                    })
-                });
-
-                const data = await result.json();
-
-                if (data.success) {
-                    // Login successful
-                    localStorage.setItem('currentUser', JSON.stringify(data.user));
-                    localStorage.setItem('authToken', data.token);
-                    showMessage('Facebook login successful! Redirecting...', 'success');
-                    
-                    setTimeout(() => {
-                        window.location.href = 'index.html';
-                    }, 1000);
-                } else {
-                    // Agar Facebook account nahi bana hai
-                    if (data.error === 'FACEBOOK_ACCOUNT_NOT_FOUND') {
-                        showMessage('No Facebook account found. Please create account first.', 'error');
-                    } else {
-                        showMessage(data.error || 'Facebook login failed', 'error');
-                    }
-                }
-            } catch (error) {
-                console.error('Facebook login error:', error);
-                showMessage('Facebook login failed. Please try again.', 'error');
-            }
-        }
-
-        // Facebook SDK Loader
-        function loadFacebookSDK() {
-            return new Promise((resolve) => {
-                window.fbAsyncInit = function() {
-                    FB.init({
-                        appId: 'YOUR_FACEBOOK_APP_ID',
-                        cookie: true,
-                        xfbml: true,
-                        version: 'v18.0'
-                    });
-                    resolve();
-                };
-
-                (function(d, s, id) {
-                    var js, fjs = d.getElementsByTagName(s)[0];
-                    if (d.getElementById(id)) return;
-                    js = d.createElement(s); js.id = id;
-                    js.src = "https://connect.facebook.net/en_US/sdk.js";
-                    fjs.parentNode.insertBefore(js, fjs);
-                }(document, 'script', 'facebook-jssdk'));
-            });
         }
 
         // Regular login
@@ -565,6 +493,11 @@
                 loginBtn.innerHTML = 'Login';
                 loginBtn.disabled = false;
             }
+        }
+
+        // Facebook Login (Placeholder - need Facebook SDK)
+        async function handleFacebookLogin() {
+            showMessage('Facebook login coming soon!', 'success');
         }
 
         // Enter key support
