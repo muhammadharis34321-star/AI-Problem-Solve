@@ -642,7 +642,6 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 });
 
-// Main Functions
 async function sendMessage() {
   const message = userInput.value.trim();
 
@@ -667,13 +666,25 @@ async function sendMessage() {
     try {
       console.log("🔄 Backend connection trying...");
 
+      // ✅ FIX: GET TOKEN FROM LOCALSTORAGE
+      const token = localStorage.getItem('token');
+      console.log("🔑 Token from localStorage:", token ? "Exists" : "Missing");
+      
+      const headers = {
+        "Content-Type": "application/json",
+      };
+      
+      // ✅ FIX: ADD AUTHORIZATION HEADER IF TOKEN EXISTS
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+        console.log("✅ Token added to request");
+      }
+
       const response = await fetch(
         "https://python22.pythonanywhere.com/api/chat",
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: headers,
           body: JSON.stringify({
             message: message,
             image: imageBase64,
@@ -699,6 +710,11 @@ async function sendMessage() {
       if (data && data.success !== false && data.response) {
         console.log("✅ Using backend AI response");
         addMessageToChat("ai", data.response);
+        
+        // ✅ SHOW REMAINING MESSAGES INFO
+        if (data.remaining_messages !== undefined && data.remaining_messages !== "unlimited") {
+          console.log(`📝 Remaining guest messages: ${data.remaining_messages}`);
+        }
       } else {
         console.log("❌ Backend error, using fallback");
         const fallbackResponse = generateAIResponse(message);
@@ -722,7 +738,6 @@ async function sendMessage() {
   currentImage = null;
   fileName.textContent = "";
 }
-
 function addMessageToChat(sender, message, image = null) {
   const messageDiv = document.createElement("div");
   messageDiv.className = `message ${sender}-message`;
