@@ -449,52 +449,53 @@ function setLoading(loading) {
         loginLoading.style.display = 'none';
     }
 }
-
-/// ✅ GOOGLE LOGIN WITH EXPLICIT EMAIL SCOPE
+// ✅ ULTIMATE GOOGLE LOGIN WITH FALLBACK
 async function realGoogleLogin() {
     setLoading(true);
     
     try {
-        console.log("🔧 Starting Google login with email scope...");
+        console.log("🚀 Starting Google login...");
         
         // Clear storage
         localStorage.removeItem('token');
         localStorage.removeItem('currentUser');
         
         const provider = new firebase.auth.GoogleAuthProvider();
-        
-        // ✅ EXPLICITLY ADD EMAIL SCOPE
         provider.addScope('email');
         provider.addScope('profile');
-        
         provider.setCustomParameters({
-            prompt: 'select_account',
-            login_hint: '' // Clear any cached email
+            prompt: 'select_account'
         });
         
-        console.log("🔧 Firebase provider with email scope ready");
+        console.log("🔑 Firebase provider ready");
         
         // Get Google user
         const result = await firebase.auth().signInWithPopup(provider);
         const user = result.user;
         
-        console.log("🔧 Complete user object:", user);
+        console.log("✅ Google auth success, user:", user);
         
-        // ✅ CHECK IF EMAIL EXISTS
-        if (!user.email) {
-            console.error("❌ NO EMAIL IN USER OBJECT:", user);
-            throw new Error('Google ne email provide nahi kiya. User object: ' + JSON.stringify(user));
+        // ✅ COMPLETE EMAIL VALIDATION WITH FALLBACK
+        let userEmail = user.email;
+        let isTempEmail = false;
+        
+        if (!userEmail) {
+            console.warn("⚠️ No email from Google, using fallback");
+            userEmail = `user_${user.uid}@temp.google.com`;
+            isTempEmail = true;
+            console.log("🔧 Using temporary email:", userEmail);
         }
         
         // Prepare data
         const userData = {
-            email: user.email,
+            email: userEmail,
             name: user.displayName || "Google User",
             profile_pic: user.photoURL || "",
-            provider: 'google'
+            provider: 'google',
+            is_temp_email: isTempEmail
         };
         
-        console.log("🔧 Sending to backend:", userData);
+        console.log("📤 Sending to backend:", userData);
         
         const response = await fetch('https://python22.pythonanywhere.com/api/google-login', {
             method: 'POST',
@@ -504,9 +505,13 @@ async function realGoogleLogin() {
             body: JSON.stringify(userData)
         });
         
+        console.log("📥 Response status:", response.status);
+        
         const data = await response.json();
+        console.log("📥 Backend response:", data);
         
         if (data.success) {
+            console.log("🎉 LOGIN SUCCESSFUL!");
             localStorage.setItem('token', data.token);
             localStorage.setItem('currentUser', JSON.stringify(data.user));
             
@@ -515,15 +520,16 @@ async function realGoogleLogin() {
                 window.location.href = 'index.html';
             }, 1000);
         } else {
-            throw new Error(data.error || 'Backend error');
+            throw new Error(data.error || 'Backend login failed');
         }
         
     } catch (error) {
-        console.error("❌ Google login error:", error);
+        console.error("❌ COMPLETE LOGIN ERROR:", error);
         
-        // Specific error handling
-        if (error.message.includes('NO EMAIL')) {
-            showAlert('Google login failed: Email not received from Google. Please try another account.', 'error');
+        if (error.code === 'auth/popup-blocked') {
+            showAlert('Popup blocked! Please allow popups.', 'error');
+        } else if (error.code === 'auth/popup-closed-by-user') {
+            showAlert('Login cancelled.', 'error');
         } else {
             showAlert('Login failed: ' + error.message, 'error');
         }
