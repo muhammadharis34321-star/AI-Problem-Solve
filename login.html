@@ -449,13 +449,11 @@ function setLoading(loading) {
         loginLoading.style.display = 'none';
     }
 }
-// ✅ ULTIMATE GOOGLE LOGIN WITH FALLBACK
+// ✅ CLEAN & SECURE GOOGLE LOGIN - NO CONSOLE LOGS
 async function realGoogleLogin() {
     setLoading(true);
     
     try {
-        console.log("🚀 Starting Google login...");
-        
         // Clear storage
         localStorage.removeItem('token');
         localStorage.removeItem('currentUser');
@@ -467,36 +465,24 @@ async function realGoogleLogin() {
             prompt: 'select_account'
         });
         
-        console.log("🔑 Firebase provider ready");
-        
         // Get Google user
         const result = await firebase.auth().signInWithPopup(provider);
         const user = result.user;
         
-        console.log("✅ Google auth success, user:", user);
-        
-        // ✅ COMPLETE EMAIL VALIDATION WITH FALLBACK
-        let userEmail = user.email;
-        let isTempEmail = false;
-        
-        if (!userEmail) {
-            console.warn("⚠️ No email from Google, using fallback");
-            userEmail = `user_${user.uid}@temp.google.com`;
-            isTempEmail = true;
-            console.log("🔧 Using temporary email:", userEmail);
+        // Validate email
+        if (!user.email) {
+            throw new Error('Google authentication failed - no email received');
         }
         
         // Prepare data
         const userData = {
-            email: userEmail,
+            email: user.email,
             name: user.displayName || "Google User",
             profile_pic: user.photoURL || "",
-            provider: 'google',
-            is_temp_email: isTempEmail
+            provider: 'google'
         };
         
-        console.log("📤 Sending to backend:", userData);
-        
+        // Send to backend
         const response = await fetch('https://python22.pythonanywhere.com/api/google-login', {
             method: 'POST',
             headers: {
@@ -505,13 +491,9 @@ async function realGoogleLogin() {
             body: JSON.stringify(userData)
         });
         
-        console.log("📥 Response status:", response.status);
-        
         const data = await response.json();
-        console.log("📥 Backend response:", data);
         
         if (data.success) {
-            console.log("🎉 LOGIN SUCCESSFUL!");
             localStorage.setItem('token', data.token);
             localStorage.setItem('currentUser', JSON.stringify(data.user));
             
@@ -520,18 +502,17 @@ async function realGoogleLogin() {
                 window.location.href = 'index.html';
             }, 1000);
         } else {
-            throw new Error(data.error || 'Backend login failed');
+            throw new Error(data.error || 'Login failed');
         }
         
     } catch (error) {
-        console.error("❌ COMPLETE LOGIN ERROR:", error);
-        
+        // Safe error messages
         if (error.code === 'auth/popup-blocked') {
-            showAlert('Popup blocked! Please allow popups.', 'error');
+            showAlert('Popup blocked! Please allow popups for this site.', 'error');
         } else if (error.code === 'auth/popup-closed-by-user') {
             showAlert('Login cancelled.', 'error');
         } else {
-            showAlert('Login failed: ' + error.message, 'error');
+            showAlert('Login failed. Please try again.', 'error');
         }
     } finally {
         setLoading(false);
