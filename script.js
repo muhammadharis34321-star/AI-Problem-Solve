@@ -1,3 +1,41 @@
+// SILENT MODE - No console logs
+async function sendMessageToBackend(message, conversationId = 'default') {
+    try {
+        const token = localStorage.getItem('token');
+        
+        const headers = {
+            'Content-Type': 'application/json',
+        };
+        
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        
+        const response = await fetch(`${BACKEND_URL}/api/chat`, {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify({
+                message: message,
+                conversation_id: conversationId
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        return await response.json();
+        
+    } catch (error) {
+        throw error;
+    }
+}
+
+
+
+
+
+
 const translations = {
   en: {
     welcome: "Welcome, User",
