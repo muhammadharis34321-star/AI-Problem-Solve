@@ -388,7 +388,7 @@
             Don't have an account? <a href="signup.html">Signup</a>
         </div>
     </div>
-<!-- Firebase SDK -->
+// Firebase SDK
 <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
 
@@ -450,11 +450,13 @@ function setLoading(loading) {
     }
 }
 
-// ✅ SIMPLE GOOGLE LOGIN - POPUP METHOD (Reliable)
+// ✅ UPDATED GOOGLE LOGIN WITH BETTER DEBUGGING
 async function realGoogleLogin() {
     setLoading(true);
     
     try {
+        console.log("🔄 Starting Google login process...");
+        
         // Clear storage
         localStorage.removeItem('token');
         localStorage.removeItem('user');
@@ -463,8 +465,9 @@ async function realGoogleLogin() {
         // Firebase signout
         try {
             await firebase.auth().signOut();
+            console.log("✅ Firebase signout successful");
         } catch (e) {
-            console.log("Signout optional:", e);
+            console.log("ℹ️ Firebase signout optional:", e);
         }
         
         const provider = new firebase.auth.GoogleAuthProvider();
@@ -472,57 +475,89 @@ async function realGoogleLogin() {
             prompt: 'select_account'
         });
         
-        console.log("🔄 Starting Google login...");
+        console.log("🔑 Firebase provider created");
         
-        // ✅ USE POPUP METHOD (More reliable)
+        // Google popup
         const result = await firebase.auth().signInWithPopup(provider);
         const user = result.user;
         
-        console.log("✅ Google login successful:", user.email);
+        console.log("✅ Google Auth Success - Full user object:", {
+            email: user.email,
+            displayName: user.displayName,
+            photoURL: user.photoURL,
+            uid: user.uid
+        });
         
-        // Send to backend
+        // ✅ COMPLETE DATA WITH ALL POSSIBLE FIELD NAMES
         const userData = {
             email: user.email,
-            name: user.displayName || "Google User",
-            profile_pic: user.photoURL || "https://via.placeholder.com/80",
+            name: user.displayName,
+            displayName: user.displayName, // Extra field
+            profile_pic: user.photoURL,
+            profilePic: user.photoURL,     // Duplicate field
+            photoURL: user.photoURL,       // Extra field  
             uid: user.uid,
             provider: 'google'
         };
         
-        console.log("📤 Sending to backend:", userData);
+        console.log("📤 Sending to backend - Complete payload:", userData);
+        
+        // ✅ ADD TIMEOUT AND BETTER ERROR HANDLING
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
         
         const response = await fetch('https://python22.pythonanywhere.com/api/google-login', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(userData)
+            headers: { 
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(userData),
+            signal: controller.signal
         });
         
-        const data = await response.json();
-        console.log("📥 Backend response:", data);
+        clearTimeout(timeoutId);
+        
+        console.log("📥 Backend response status:", response.status);
+        console.log("📥 Backend response headers:", Object.fromEntries(response.headers.entries()));
+        
+        const responseText = await response.text();
+        console.log("📥 Backend raw response:", responseText);
+        
+        let data;
+        try {
+            data = JSON.parse(responseText);
+        } catch (e) {
+            console.error("❌ JSON parse error:", e);
+            throw new Error('Invalid JSON response from server');
+        }
+        
+        console.log("📥 Backend parsed response:", data);
         
         if (data.success) {
-            // ✅ STORE DATA AND REDIRECT
+            console.log("✅ Login successful, storing data...");
+            
             localStorage.setItem('token', data.token);
             localStorage.setItem('user', JSON.stringify(data.user));
             localStorage.setItem('currentUser', JSON.stringify(data.user));
             
             showAlert(`Welcome ${data.user.name}! Redirecting...`, 'success');
             
-            // ✅ FORCE REDIRECT AFTER 1 SECOND
             setTimeout(() => {
                 console.log("🚀 Redirecting to index.html...");
                 window.location.href = 'index.html';
             }, 1000);
             
         } else {
+            console.error("❌ Backend error:", data.error);
             throw new Error(data.error || 'Backend login failed');
         }
         
     } catch (error) {
-        console.error("❌ Google Auth Error:", error);
+        console.error("❌ Google Auth Complete Error:", error);
         
-        // ✅ SPECIFIC ERROR MESSAGES
-        if (error.code === 'auth/popup-blocked') {
+        if (error.name === 'AbortError') {
+            showAlert('Request timeout! Server is taking too long to respond.', 'error');
+        } else if (error.code === 'auth/popup-blocked') {
             showAlert('Popup blocked! Please allow popups for this site.', 'error');
         } else if (error.code === 'auth/popup-closed-by-user') {
             showAlert('Login cancelled by user.', 'error');
