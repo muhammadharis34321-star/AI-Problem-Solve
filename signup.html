@@ -5,218 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Problem Solve - Signup</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .signup-container {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            max-width: 450px;
-            padding: 40px;
-        }
-
-        .logo {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .logo h1 {
-            color: #333;
-            font-size: 28px;
-            font-weight: 700;
-        }
-
-        .logo p {
-            color: #666;
-            margin-top: 5px;
-        }
-
-        .welcome-text {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .welcome-text h2 {
-            color: #333;
-            font-size: 24px;
-            margin-bottom: 8px;
-        }
-
-        .welcome-text p {
-            color: #666;
-            font-size: 14px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: #333;
-            font-weight: 500;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 15px;
-            border: 2px solid #e1e1e1;
-            border-radius: 10px;
-            font-size: 16px;
-            transition: all 0.3s ease;
-        }
-
-        .form-group input:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .signup-btn {
-            width: 100%;
-            padding: 15px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .signup-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-        }
-
-        .signup-btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-
-        .divider {
-            text-align: center;
-            margin: 30px 0;
-            position: relative;
-            color: #666;
-        }
-
-        .divider::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: #e1e1e1;
-        }
-
-        .divider span {
-            background: white;
-            padding: 0 15px;
-            position: relative;
-        }
-
-        .social-signup {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 30px;
-        }
-
-        .social-btn {
-            flex: 1;
-            padding: 12px;
-            border: 2px solid #e1e1e1;
-            border-radius: 10px;
-            background: white;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            transition: all 0.3s ease;
-            font-weight: 500;
-        }
-
-        .social-btn:hover {
-            border-color: #667eea;
-            transform: translateY(-2px);
-        }
-
-        .social-btn.google {
-            color: #DB4437;
-        }
-
-        .social-btn.facebook {
-            color: #4267B2;
-        }
-
-        .login-link {
-            text-align: center;
-            color: #666;
-        }
-
-        .login-link a {
-            color: #667eea;
-            text-decoration: none;
-            font-weight: 500;
-        }
-
-        .login-link a:hover {
-            text-decoration: underline;
-        }
-
-        .alert {
-            padding: 12px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            display: none;
-        }
-
-        .alert.error {
-            background: #fee;
-            border: 1px solid #f5c6cb;
-            color: #721c24;
-        }
-
-        .alert.success {
-            background: #e8f5e8;
-            border: 1px solid #c3e6cb;
-            color: #155724;
-        }
-
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid #ffffff;
-            border-radius: 50%;
-            border-top-color: transparent;
-            animation: spin 1s ease-in-out infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+        /* ... aapka existing CSS same rahega ... */
     </style>
 </head>
 <body>
@@ -325,26 +114,31 @@ function setLoading(loading) {
     }
 }
 
-// REAL GOOGLE SIGNUP WITH FIREBASE
+// REAL GOOGLE SIGNUP WITH FORCED ACCOUNT SELECTION
 async function realGoogleSignup() {
     setLoading(true);
     
     try {
         const provider = new firebase.auth.GoogleAuthProvider();
         
+        // 🔥 YEH 2 LINES ADD KARO - HAR BAAR ACCOUNT SELECTION KARAYEGI
+        provider.setCustomParameters({
+            prompt: 'select_account'
+        });
+        
         // Additional scopes
         provider.addScope('email');
         provider.addScope('profile');
         
-        console.log("Starting real Google signup...");
+        console.log("Starting real Google signup with FORCED account selection...");
         
-        // Google sign-in popup - REAL GOOGLE ACCOUNT SELECTION
+        // Google sign-in popup - AB PAKKA ACCOUNT SELECTION HOGA
         const result = await firebase.auth().signInWithPopup(provider);
         
         // Ye REAL Google user data hai
         const user = result.user;
         
-        console.log("Real Google User:", user);
+        console.log("Real Google User after selection:", user);
         
         // Aapke backend pe bhejo signup ke liye
         await sendToYourBackendForSignup({
