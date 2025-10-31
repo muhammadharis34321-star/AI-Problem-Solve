@@ -450,53 +450,58 @@ function setLoading(loading) {
     }
 }
 
-// ✅ ULTIMATE GOOGLE LOGIN FIX
+// ✅ HTTP 400 FIX - COMPLETE DATA VALIDATION
 async function realGoogleLogin() {
     setLoading(true);
     
     try {
-        console.log("🚀 ULTIMATE GOOGLE LOGIN STARTING...");
+        console.log("🔧 DEBUG: Starting Google login...");
         
-        // Clear everything
-        localStorage.clear();
-        sessionStorage.clear();
-        
-        // Firebase signout
-        try {
-            await firebase.auth().signOut();
-            console.log("✅ Firebase signout done");
-        } catch (e) {
-            console.log("ℹ️ Signout skipped:", e);
-        }
+        // Clear storage
+        localStorage.removeItem('token');
+        localStorage.removeItem('currentUser');
         
         const provider = new firebase.auth.GoogleAuthProvider();
         provider.setCustomParameters({
             prompt: 'select_account'
         });
         
-        console.log("🔑 Firebase provider ready");
+        console.log("🔧 DEBUG: Firebase setup done");
         
-        // Google popup
+        // Get Google user
         const result = await firebase.auth().signInWithPopup(provider);
         const user = result.user;
         
-        console.log("✅ Google user received:", {
+        console.log("🔧 DEBUG: Google user received:", {
             email: user.email,
-            name: user.displayName,
-            hasPhoto: !!user.photoURL
+            displayName: user.displayName,
+            photoURL: user.photoURL
         });
         
-        // ✅ SIMPLIFIED DATA - Only essential fields
+        // ✅ COMPLETE DATA VALIDATION
+        if (!user.email) {
+            throw new Error('Google se email nahi mila');
+        }
+        
+        // ✅ ALL POSSIBLE DATA COMBINATIONS
         const userData = {
+            // Primary fields
             email: user.email,
             name: user.displayName || "Google User",
-            profile_pic: user.photoURL || "https://via.placeholder.com/80",
-            provider: 'google'
+            profile_pic: user.photoURL || "",
+            
+            // Alternative field names
+            profilePic: user.photoURL || "",
+            photoURL: user.photoURL || "",
+            displayName: user.displayName || "Google User",
+            
+            provider: 'google',
+            uid: user.uid
         };
         
-        console.log("📤 Sending to backend:", userData);
+        console.log("🔧 DEBUG: Sending to backend:", userData);
         
-        // ✅ DIRECT FETCH WITH NO COMPLEX OPTIONS
+        // ✅ SIMPLE FETCH WITH ERROR HANDLING
         const response = await fetch('https://python22.pythonanywhere.com/api/google-login', {
             method: 'POST',
             headers: {
@@ -505,40 +510,38 @@ async function realGoogleLogin() {
             body: JSON.stringify(userData)
         });
         
-        console.log("📥 Response status:", response.status);
+        console.log("🔧 DEBUG: Response status:", response.status);
+        console.log("🔧 DEBUG: Response ok:", response.ok);
         
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            const errorText = await response.text();
+            console.error("🔧 DEBUG: Response error:", errorText);
+            throw new Error(`HTTP ${response.status}: ${errorText}`);
         }
         
         const data = await response.json();
-        console.log("📥 Backend response:", data);
+        console.log("🔧 DEBUG: Backend response:", data);
         
         if (data.success) {
-            console.log("🎉 LOGIN SUCCESS!");
-            
+            console.log("🔧 DEBUG: Login successful!");
             localStorage.setItem('token', data.token);
             localStorage.setItem('currentUser', JSON.stringify(data.user));
             
             showAlert(`Welcome ${data.user.name}!`, 'success');
-            
-            // Redirect immediately
             setTimeout(() => {
                 window.location.href = 'index.html';
             }, 1000);
-            
         } else {
-            throw new Error(data.error || 'Login failed');
+            throw new Error(data.error || 'Unknown backend error');
         }
         
     } catch (error) {
-        console.error("💥 LOGIN ERROR:", error);
+        console.error("🔧 DEBUG: Complete error:", error);
         showAlert('Login failed: ' + error.message, 'error');
     } finally {
         setLoading(false);
     }
 }
-
 // ✅ ALTERNATIVE: CHECK FOR EXISTING AUTH ON PAGE LOAD
 document.addEventListener('DOMContentLoaded', function() {
     console.log("🔄 Checking for existing auth state...");
