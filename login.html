@@ -451,26 +451,31 @@ function setLoading(loading) {
     }
 }
 
-// REAL GOOGLE AUTHENTICATION WITH FIREBASE
+// REAL GOOGLE AUTHENTICATION WITH FORCED ACCOUNT SELECTION
 async function realGoogleLogin() {
     setLoading(true);
     
     try {
         const provider = new firebase.auth.GoogleAuthProvider();
         
+        // 🔥 YEH 2 LINES ADD KARO - HAR BAAR ACCOUNT SELECTION KARAYEGI
+        provider.setCustomParameters({
+            prompt: 'select_account'
+        });
+        
         // Additional scopes
         provider.addScope('email');
         provider.addScope('profile');
         
-        console.log("Starting real Google authentication...");
+        console.log("Starting real Google authentication with FORCED account selection...");
         
-        // Google sign-in popup - YAHAN REAL GOOGLE ACCOUNT SELECTION HOGA
+        // Google sign-in popup - AB PAKKA ACCOUNT SELECTION HOGA
         const result = await firebase.auth().signInWithPopup(provider);
         
         // Ye REAL Google user data hai
         const user = result.user;
         
-        console.log("Real Google User:", user);
+        console.log("Real Google User after selection:", user);
         
         // Aapke backend pe bhejo
         await sendToYourBackend({
