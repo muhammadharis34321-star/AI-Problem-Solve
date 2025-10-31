@@ -450,7 +450,6 @@ function setLoading(loading) {
         loginLoading.style.display = 'none';
     }
 }
-
 // REAL GOOGLE AUTHENTICATION WITH FORCED ACCOUNT SELECTION
 async function realGoogleLogin() {
     setLoading(true);
@@ -477,7 +476,7 @@ async function realGoogleLogin() {
         
         console.log("Real Google User after selection:", user);
         
-        // Aapke backend pe bhejo
+        // ✅ YEH LINE CHANGE KARO - Direct google-login endpoint use karo
         await sendToYourBackend({
             email: user.email,
             name: user.displayName,
@@ -494,13 +493,14 @@ async function realGoogleLogin() {
     }
 }
 
-// Aapke backend pe real Google user data bhejo
+// ✅ YEH FUNCTION UPDATE KARO - Direct final login endpoint use karo
 async function sendToYourBackend(userData) {
     setLoading(true);
     
     try {
         console.log("Sending real Google user to backend:", userData);
         
+        // ✅ DIRECT FINAL LOGIN ENDPOINT USE KARO
         const response = await fetch('https://python22.pythonanywhere.com/api/google-login', {
             method: 'POST',
             headers: {
@@ -532,6 +532,7 @@ async function sendToYourBackend(userData) {
         setLoading(false);
     }
 }
+
 
 // Regular login form
 document.getElementById('loginForm').addEventListener('submit', async function(e) {
