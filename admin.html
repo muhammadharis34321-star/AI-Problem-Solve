@@ -723,11 +723,11 @@
             });
         }
 
-      // View user details - YEH WALA CHANGE KAREIN
+// View user details - YEH CHANGE KAREIN
 async function viewUser(userId) {
     try {
-        // CHANGE: /api/admin/user/ se /user/ karein
-        const response = await fetch(`${BACKEND_URL}/user/${userId}`);
+        // CHANGE: /user/ se /api/admin/user/ karein
+        const response = await fetch(`${BACKEND_URL}/api/admin/user/${userId}`);
         const data = await response.json();
 
         if (data.success) {
@@ -784,13 +784,12 @@ async function viewUser(userId) {
         console.error('Error loading user details:', error);
         showError('Failed to load user details');
     }
-}
-       // Delete user - YEH WALA CHANGE KAREIN
+}     // Delete user - YEH CHANGE KAREIN
 async function deleteUser(userId) {
     if (confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
         try {
-            // CHANGE: /api/admin/delete-user/ se /delete-user/ karein
-            const response = await fetch(`${BACKEND_URL}/delete-user/${userId}`, {
+            // CHANGE: /delete-user/ se /api/admin/delete-user/ karein
+            const response = await fetch(`${BACKEND_URL}/api/admin/delete-user/${userId}`, {
                 method: 'DELETE'
             });
             const data = await response.json();
