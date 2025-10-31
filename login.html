@@ -5,10 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Cross-Origin-Opener-Policy" content="unsafe-none">
     <title>AI Problem Solve - Login</title>
-    <link rel="stylesheet" href="style.css" />
     <link rel="icon" type="image/x-icon" href="https://cdn-icons-png.flaticon.com/512/4712/4712035.png">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-
     <style>
         * {
             margin: 0;
@@ -156,38 +153,51 @@
             position: relative;
         }
 
-        .social-login {
-            display: flex;
-            gap: 15px;
+        /* BADA GOOGLE BUTTON */
+        .google-btn-container {
             margin-bottom: 30px;
         }
 
-        .social-btn {
-            flex: 1;
-            padding: 12px;
+        .google-btn {
+            width: 100%;
+            padding: 18px;
             border: 2px solid #e1e1e1;
-            border-radius: 10px;
+            border-radius: 12px;
             background: white;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 12px;
             transition: all 0.3s ease;
-            font-weight: 500;
+            font-weight: 600;
+            font-size: 16px;
+            color: #444;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
 
-        .social-btn:hover {
-            border-color: #667eea;
-            transform: translateY(-2px);
+        .google-btn:hover {
+            border-color: #DB4437;
+            background: #f8f9ff;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(219, 68, 55, 0.2);
         }
 
-        .social-btn.google {
-            color: #DB4437;
+        .google-btn:active {
+            transform: translateY(-1px);
         }
 
-        .social-btn.facebook {
-            color: #4267B2;
+        .google-icon {
+            width: 24px;
+            height: 24px;
+            background: conic-gradient(from -45deg, #ea4335 110deg, #4285f4 90deg 180deg, #34a853 180deg 270deg, #fbbc05 270deg) 73% 55%/150% 150% no-repeat;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            font-size: 14px;
         }
 
         .signup-link {
@@ -234,103 +244,6 @@
             animation: spin 1s ease-in-out infinite;
         }
 
-        /* Account Selection Modal */
-        .account-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
-
-        .modal-content {
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
-            max-width: 500px;
-            width: 90%;
-            max-height: 80vh;
-            overflow-y: auto;
-        }
-
-        .modal-content h3 {
-            color: #333;
-            margin-bottom: 10px;
-            text-align: center;
-        }
-
-        .modal-content p {
-            color: #666;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .accounts-list {
-            margin-bottom: 20px;
-        }
-
-        .account-item {
-            display: flex;
-            align-items: center;
-            padding: 15px;
-            border: 2px solid #e1e1e1;
-            border-radius: 10px;
-            margin-bottom: 10px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .account-item:hover {
-            border-color: #667eea;
-            background: #f8f9ff;
-        }
-
-        .account-item img {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            margin-right: 15px;
-        }
-
-        .account-item strong {
-            color: #333;
-            display: block;
-            margin-bottom: 5px;
-        }
-
-        .account-item p {
-            color: #666;
-            margin: 0;
-            text-align: left;
-        }
-
-        .account-item small {
-            color: #888;
-            font-size: 12px;
-        }
-
-        .create-new-btn {
-            width: 100%;
-            padding: 12px;
-            background: #28a745;
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .create-new-btn:hover {
-            background: #218838;
-        }
-
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
@@ -342,8 +255,6 @@
             <h1>AI Problem Solve</h1>
             <p>Your AI Assistant</p>
         </div>
-
-    
 
         <div id="alert" class="alert"></div>
 
@@ -372,12 +283,11 @@
             <span>OR</span>
         </div>
 
-        <div class="social-login">
-            <button class="social-btn google" onclick="realGoogleLogin()">
-                <i>G</i> Continue with Google
-            </button>
-            <button class="social-btn facebook" onclick="facebookLogin()">
-                <i>f</i> Facebook
+        <!-- BADA GOOGLE BUTTON -->
+        <div class="google-btn-container">
+            <button class="google-btn" onclick="realGoogleLogin()">
+                <div class="google-icon">G</div>
+                Continue with Google
             </button>
         </div>
 
@@ -410,10 +320,7 @@ function checkAuth() {
     const token = localStorage.getItem('token');
     const currentUser = localStorage.getItem('currentUser');
     
-    console.log("Auth check - Token:", !!token, "User:", !!currentUser);
-    
     if (token && currentUser) {
-        console.log("User already authenticated, redirecting...");
         setTimeout(() => {
             window.location.href = 'index.html';
         }, 500);
@@ -446,12 +353,12 @@ function setLoading(loading) {
         loginLoading.style.display = 'none';
     }
 }
-// ✅ CLEAN & SECURE GOOGLE LOGIN - NO CONSOLE LOGS
+
+// GOOGLE LOGIN
 async function realGoogleLogin() {
     setLoading(true);
     
     try {
-        // Clear storage
         localStorage.removeItem('token');
         localStorage.removeItem('currentUser');
         
@@ -462,16 +369,13 @@ async function realGoogleLogin() {
             prompt: 'select_account'
         });
         
-        // Get Google user
         const result = await firebase.auth().signInWithPopup(provider);
         const user = result.user;
         
-        // Validate email
         if (!user.email) {
-            throw new Error('Google authentication failed - no email received');
+            throw new Error('Google authentication failed');
         }
         
-        // Prepare data
         const userData = {
             email: user.email,
             name: user.displayName || "Google User",
@@ -479,7 +383,6 @@ async function realGoogleLogin() {
             provider: 'google'
         };
         
-        // Send to backend
         const response = await fetch('https://python22.pythonanywhere.com/api/google-login', {
             method: 'POST',
             headers: {
@@ -503,7 +406,6 @@ async function realGoogleLogin() {
         }
         
     } catch (error) {
-        // Safe error messages
         if (error.code === 'auth/popup-blocked') {
             showAlert('Popup blocked! Please allow popups for this site.', 'error');
         } else if (error.code === 'auth/popup-closed-by-user') {
@@ -515,21 +417,6 @@ async function realGoogleLogin() {
         setLoading(false);
     }
 }
-// ✅ ALTERNATIVE: CHECK FOR EXISTING AUTH ON PAGE LOAD
-document.addEventListener('DOMContentLoaded', function() {
-    console.log("🔄 Checking for existing auth state...");
-    
-    // Check if user is already logged in
-    checkAuth();
-    
-    // Check if we have a redirect result
-    firebase.auth().getRedirectResult().then((result) => {
-        if (result.user) {
-            console.log("🔄 Redirect result found:", result.user.email);
-            // Handle redirect login if needed
-        }
-    });
-});
 
 // Regular login form
 document.getElementById('loginForm').addEventListener('submit', async function(e) {
@@ -575,11 +462,6 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
         setLoading(false);
     }
 });
-
-// Facebook Login
-function facebookLogin() {
-    showAlert('Facebook login coming soon!', 'success');
-}
 
 // Forgot password
 function forgotPassword() {
