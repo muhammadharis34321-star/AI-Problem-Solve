@@ -452,24 +452,41 @@ function setLoading(loading) {
 }
 // REAL GOOGLE AUTHENTICATION WITH FORCED ACCOUNT SELECTION
 async function realGoogleLogin() {
+    // ✅ CLEAR ALL CACHE AND STORAGE BEFORE LOGIN
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('currentUser');
+    sessionStorage.clear();
+    
+    try {
+        // ✅ FIREBASE SIGNOUT FIRST
+        await firebase.auth().signOut();
+    } catch (e) {
+        console.log("Firebase signout optional:", e);
+    }
+    
     setLoading(true);
     
     try {
         const provider = new firebase.auth.GoogleAuthProvider();
         
+        // ✅ FORCE ACCOUNT SELECTION + CLEAR CACHE
         provider.setCustomParameters({
-            prompt: 'select_account'
+            prompt: 'select_account',
+            login_hint: '',
+            include_granted_scopes: 'false'
         });
         
         provider.addScope('email');
         provider.addScope('profile');
         
-        console.log("Starting real Google authentication...");
+        console.log("🔄 Starting fresh Google authentication...");
         
+        // Google sign-in popup
         const result = await firebase.auth().signInWithPopup(provider);
         const user = result.user;
         
-        console.log("🎯 Google User Data:", {
+        console.log("🎯 Fresh Google User Data:", {
             email: user.email,
             name: user.displayName,
             photo: user.photoURL,
@@ -502,6 +519,12 @@ async function realGoogleLogin() {
         console.log("📥 Backend response data:", data);
         
         if (data.success) {
+            // ✅ CLEAR OLD DATA FIRST
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            localStorage.removeItem('currentUser');
+            
+            // ✅ STORE NEW DATA
             localStorage.setItem('token', data.token);
             localStorage.setItem('user', JSON.stringify(data.user));
             localStorage.setItem('currentUser', JSON.stringify(data.user));
