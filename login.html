@@ -290,6 +290,11 @@
             height: 50px;
             border-radius: 50%;
             margin-right: 15px;
+            object-fit: cover;
+        }
+
+        .account-item .account-info {
+            flex: 1;
         }
 
         .account-item strong {
@@ -478,6 +483,11 @@ async function realGoogleLogin() {
     } catch (error) {
         console.error("Google Auth Error:", error);
         showAlert('Google login failed: ' + error.message, 'error');
+        
+        // Firebase popup close error ko ignore karo
+        if (error.message.includes('Cross-Origin-Opener-Policy')) {
+            console.log('Firebase popup close error - safe to ignore');
+        }
     } finally {
         setLoading(false);
     }
@@ -491,10 +501,16 @@ function showAccountSelectionModal(accounts) {
     
     let accountsHTML = '';
     accounts.forEach(account => {
+        // Default profile picture agar nahi hai to
+        const profilePic = account.profilePic && account.profilePic !== 'https://via.placeholder.com/80' 
+            ? account.profilePic 
+            : 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face';
+        
         accountsHTML += `
             <div class="account-item" onclick="selectExistingAccount(${account.id})">
-                <img src="${account.profilePic}" alt="${account.name}" onerror="this.src='https://via.placeholder.com/80'">
-                <div>
+                <img src="${profilePic}" alt="${account.name}" 
+                     onerror="this.src='https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face'">
+                <div class="account-info">
                     <strong>${account.name}</strong>
                     <p>${account.email}</p>
                     <small>Joined: ${new Date(account.created_at).toLocaleDateString()}</small>
@@ -511,6 +527,12 @@ function showAccountSelectionModal(accounts) {
             <div class="accounts-list">
                 ${accountsHTML}
             </div>
+            
+            <div style="text-align: center; margin-top: 20px;">
+                <button onclick="closeModalAndRedirect()" style="padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                    Cancel
+                </button>
+            </div>
         </div>
     `;
     
@@ -519,9 +541,19 @@ function showAccountSelectionModal(accounts) {
     // Background click pe modal close
     modal.addEventListener('click', function(e) {
         if (e.target === modal) {
-            document.body.removeChild(modal);
+            closeModalAndRedirect();
         }
     });
+}
+
+// Modal close karne ka function
+function closeModalAndRedirect() {
+    const modal = document.querySelector('.account-modal');
+    if (modal) {
+        document.body.removeChild(modal);
+    }
+    // Redirect to login page
+    window.location.href = 'login.html';
 }
 
 // EXISTING ACCOUNT SELECT KARNE KA FUNCTION
@@ -549,8 +581,7 @@ async function selectExistingAccount(userId) {
             showAlert(`Welcome back ${data.user.name}!`, 'success');
             
             // Modal close karo
-            const modal = document.querySelector('.account-modal');
-            if (modal) document.body.removeChild(modal);
+            closeModalAndRedirect();
             
             setTimeout(() => {
                 window.location.href = 'index.html';
