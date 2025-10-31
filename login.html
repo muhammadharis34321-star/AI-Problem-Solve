@@ -354,35 +354,53 @@ function setLoading(loading) {
     }
 }
 
-// GOOGLE LOGIN
+// ✅ FIXED GOOGLE LOGIN FUNCTION
 async function realGoogleLogin() {
     setLoading(true);
     
     try {
+        console.log("Starting Google login...");
+        
+        // Clear any existing data
         localStorage.removeItem('token');
         localStorage.removeItem('currentUser');
         
         const provider = new firebase.auth.GoogleAuthProvider();
+        
+        // IMPORTANT: Add these scopes
         provider.addScope('email');
         provider.addScope('profile');
+        
+        // Force account selection every time
         provider.setCustomParameters({
-            prompt: 'select_account'
+            prompt: 'select_account',
+            login_hint: ''
         });
         
+        console.log("Opening Google popup...");
+        
+        // Sign in with popup
         const result = await firebase.auth().signInWithPopup(provider);
         const user = result.user;
         
-        if (!user.email) {
-            throw new Error('Google authentication failed');
+        console.log("Google user received:", user);
+        
+        if (!user || !user.email) {
+            throw new Error('Google authentication failed - no user data received');
         }
         
+        // Prepare data for backend
         const userData = {
             email: user.email,
             name: user.displayName || "Google User",
             profile_pic: user.photoURL || "",
-            provider: 'google'
+            provider: 'google',
+            provider_id: user.uid // Add provider_id for better tracking
         };
         
+        console.log("Sending to backend:", userData);
+        
+        // Send to your backend
         const response = await fetch('https://python22.pythonanywhere.com/api/google-login', {
             method: 'POST',
             headers: {
@@ -391,27 +409,54 @@ async function realGoogleLogin() {
             body: JSON.stringify(userData)
         });
         
+        console.log("Backend response status:", response.status);
+        
         const data = await response.json();
+        console.log("Backend response data:", data);
         
         if (data.success) {
+            // Save token and user data
             localStorage.setItem('token', data.token);
             localStorage.setItem('currentUser', JSON.stringify(data.user));
+            localStorage.setItem('user', JSON.stringify(data.user));
+            
+            console.log("Login successful, redirecting...");
             
             showAlert(`Welcome ${data.user.name}!`, 'success');
+            
+            // Redirect to main page
             setTimeout(() => {
                 window.location.href = 'index.html';
             }, 1000);
+            
         } else {
-            throw new Error(data.error || 'Login failed');
+            // Handle backend errors
+            let errorMessage = data.error || 'Login failed';
+            
+            // Specific error handling
+            if (errorMessage.includes('already exists')) {
+                errorMessage = 'Account with this email already exists. Please use regular login.';
+            } else if (errorMessage.includes('not found')) {
+                errorMessage = 'No account found with this Google email. Please sign up first.';
+            }
+            
+            throw new Error(errorMessage);
         }
         
     } catch (error) {
+        console.error("Google Login Error:", error);
+        
+        // User-friendly error messages
         if (error.code === 'auth/popup-blocked') {
-            showAlert('Popup blocked! Please allow popups for this site.', 'error');
+            showAlert('Popup blocked! Please allow popups for this site and try again.', 'error');
         } else if (error.code === 'auth/popup-closed-by-user') {
-            showAlert('Login cancelled.', 'error');
+            showAlert('Google login was cancelled.', 'error');
+        } else if (error.code === 'auth/network-request-failed') {
+            showAlert('Network error. Please check your internet connection.', 'error');
+        } else if (error.code === 'auth/unauthorized-domain') {
+            showAlert('Domain not authorized. Please contact support.', 'error');
         } else {
-            showAlert('Login failed. Please try again.', 'error');
+            showAlert('Google login failed: ' + error.message, 'error');
         }
     } finally {
         setLoading(false);
