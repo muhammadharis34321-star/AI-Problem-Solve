@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Problem Solve - Login</title>
     <style>
+        /* Same CSS as before */
         * {
             margin: 0;
             padding: 0;
@@ -229,6 +230,103 @@
             animation: spin 1s ease-in-out infinite;
         }
 
+        /* Account Selection Modal */
+        .account-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-content h3 {
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .modal-content p {
+            color: #666;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .accounts-list {
+            margin-bottom: 20px;
+        }
+
+        .account-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border: 2px solid #e1e1e1;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .account-item:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .account-item img {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            margin-right: 15px;
+        }
+
+        .account-item strong {
+            color: #333;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .account-item p {
+            color: #666;
+            margin: 0;
+            text-align: left;
+        }
+
+        .account-item small {
+            color: #888;
+            font-size: 12px;
+        }
+
+        .create-new-btn {
+            width: 100%;
+            padding: 12px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .create-new-btn:hover {
+            background: #218838;
+        }
+
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
@@ -349,7 +447,7 @@ function setLoading(loading) {
     }
 }
 
-// REAL GOOGLE AUTHENTICATION - SIMPLE & DIRECT
+// REAL GOOGLE AUTHENTICATION WITH ACCOUNT SELECTION
 async function realGoogleLogin() {
     setLoading(true);
     
@@ -360,14 +458,14 @@ async function realGoogleLogin() {
         
         console.log("Starting real Google authentication...");
         
-        // Google sign-in popup
+        // Step 1: Google se authentication karo
         const result = await firebase.auth().signInWithPopup(provider);
         const user = result.user;
         
         console.log("Real Google User:", user);
         
-        // Direct backend pe bhejo REAL user data
-        const response = await fetch('https://python22.pythonanywhere.com/api/google-login', {
+        // Step 2: Backend pe bhejo for account selection
+        const response = await fetch('https://python22.pythonanywhere.com/api/google-auth', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -384,11 +482,107 @@ async function realGoogleLogin() {
         const data = await response.json();
         
         if (data.success) {
+            if (data.action === 'choose_account') {
+                // ACCOUNT SELECTION MODAL SHOW KARO - REAL ACCOUNTS
+                showAccountSelectionModal(data.accounts, {
+                    email: user.email,
+                    name: user.displayName,
+                    profilePic: user.photoURL,
+                    uid: user.uid
+                });
+            } else if (data.action === 'create_account') {
+                // NEW ACCOUNT CREATE KARO
+                await createNewGoogleAccount({
+                    email: user.email,
+                    name: user.displayName,
+                    profilePic: user.photoURL,
+                    uid: user.uid
+                });
+            }
+        } else {
+            throw new Error(data.error || 'Authentication failed');
+        }
+        
+    } catch (error) {
+        console.error("Google Auth Error:", error);
+        showAlert('Google login failed: ' + error.message, 'error');
+    } finally {
+        setLoading(false);
+    }
+}
+
+// ACCOUNT SELECTION MODAL SHOW KARNE KA FUNCTION
+function showAccountSelectionModal(accounts, googleUserData) {
+    const modal = document.createElement('div');
+    modal.className = 'account-modal';
+    modal.style.display = 'flex';
+    
+    let accountsHTML = '';
+    accounts.forEach(account => {
+        accountsHTML += `
+            <div class="account-item" onclick="selectExistingAccount(${account.id})">
+                <img src="${account.profilePic}" alt="${account.name}" onerror="this.src='https://via.placeholder.com/80'">
+                <div>
+                    <strong>${account.name}</strong>
+                    <p>${account.email}</p>
+                    <small>Joined: ${new Date(account.created_at).toLocaleDateString()}</small>
+                </div>
+            </div>
+        `;
+    });
+    
+    modal.innerHTML = `
+        <div class="modal-content">
+            <h3>Choose an Account</h3>
+            <p>We found ${accounts.length} account(s) with this email. Which one would you like to use?</p>
+            
+            <div class="accounts-list">
+                ${accountsHTML}
+            </div>
+            
+            <button class="create-new-btn" onclick="createNewGoogleAccount(${JSON.stringify(googleUserData).replace(/"/g, '&quot;')})">
+                Create New Account
+            </button>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Background click pe modal close
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            document.body.removeChild(modal);
+        }
+    });
+}
+
+// EXISTING ACCOUNT SELECT KARNE KA FUNCTION
+async function selectExistingAccount(userId) {
+    setLoading(true);
+    
+    try {
+        const response = await fetch('https://python22.pythonanywhere.com/api/google-login-account', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                user_id: userId
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
             localStorage.setItem('token', data.token);
             localStorage.setItem('user', JSON.stringify(data.user));
             localStorage.setItem('currentUser', JSON.stringify(data.user));
             
-            showAlert(`Welcome ${data.user.name}!`, 'success');
+            showAlert(`Welcome back ${data.user.name}!`, 'success');
+            
+            // Modal close karo
+            const modal = document.querySelector('.account-modal');
+            if (modal) document.body.removeChild(modal);
             
             setTimeout(() => {
                 window.location.href = 'index.html';
@@ -396,10 +590,49 @@ async function realGoogleLogin() {
         } else {
             throw new Error(data.error || 'Login failed');
         }
-        
     } catch (error) {
-        console.error("Google Auth Error:", error);
-        showAlert('Google login failed: ' + error.message, 'error');
+        console.error('Account selection error:', error);
+        showAlert('Login failed: ' + error.message, 'error');
+    } finally {
+        setLoading(false);
+    }
+}
+
+// NEW GOOGLE ACCOUNT CREATE KARNE KA FUNCTION
+async function createNewGoogleAccount(googleUserData) {
+    setLoading(true);
+    
+    try {
+        const response = await fetch('https://python22.pythonanywhere.com/api/google-create-account', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(googleUserData)
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('user', JSON.stringify(data.user));
+            localStorage.setItem('currentUser', JSON.stringify(data.user));
+            
+            showAlert(`Welcome ${data.user.name}!`, 'success');
+            
+            // Modal close karo
+            const modal = document.querySelector('.account-modal');
+            if (modal) document.body.removeChild(modal);
+            
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 1000);
+        } else {
+            throw new Error(data.error || 'Account creation failed');
+        }
+    } catch (error) {
+        console.error('Account creation error:', error);
+        showAlert('Account creation failed: ' + error.message, 'error');
     } finally {
         setLoading(false);
     }
