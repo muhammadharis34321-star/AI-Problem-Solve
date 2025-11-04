@@ -1930,7 +1930,42 @@
   
   
   
-  
+  /* SCROLLBAR HIDE KARNE KA CODE */
+.messages-container::-webkit-scrollbar {
+    display: none;
+}
+
+.messages-container {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.chat-container::-webkit-scrollbar {
+    display: none;
+}
+
+.chat-container {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.text-input-container::-webkit-scrollbar {
+    display: none;
+}
+
+.text-input-container {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+#userInput::-webkit-scrollbar {
+    display: none;
+}
+
+#userInput {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
   
   
   
