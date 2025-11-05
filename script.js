@@ -653,23 +653,19 @@ document.addEventListener("DOMContentLoaded", function () {
     updateLanguage();
   }
 });
-// ✅ SIMPLE & WORKING IMAGE ENHANCEMENT
+// ✅ DEBUGGING VERSION - Image Upload
 async function handleImageUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
 
-    // Check file size
-    if (file.size > 10 * 1024 * 1024) {
-        showMessage("❌ Image too large! Please select image under 10MB", "ai");
-        return;
-    }
+    console.log("📸 File selected:", file.name, file.size, file.type);
 
     const uploadBtn = document.getElementById('uploadBtn');
     const originalHTML = uploadBtn.innerHTML;
     uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
     
     try {
-        // Show original image preview
+        // Show original image
         const reader = new FileReader();
         reader.onload = function(e) {
             const messagesContainer = document.getElementById('messagesContainer');
@@ -682,7 +678,7 @@ async function handleImageUpload(event) {
             messageDiv.innerHTML = `
                 <div class="message-content">
                     <div class="image-message">
-                        <img src="${e.target.result}" alt="Original Image" class="uploaded-image">
+                        <img src="${e.target.result}" alt="Original" class="uploaded-image">
                         <div class="image-info">
                             <span class="file-icon">📷</span>
                             <span class="file-name">${file.name}</span>
@@ -696,20 +692,24 @@ async function handleImageUpload(event) {
         };
         reader.readAsDataURL(file);
 
-        // Get user token
+        // Get token
         const token = localStorage.getItem('token');
         if (!token) {
-            showMessage("🔐 Please login to use image enhancement", "ai");
+            showMessage("🔐 Please login first", "ai");
             return;
         }
 
-        // ✅ USE BRIGHTEN-IMAGE FOR BETTER RESULTS
+        console.log("🔑 Token found, sending to backend...");
+
+        // ✅ FIRST TEST WITH SIMPLE ROUTE
         const formData = new FormData();
         formData.append('image', file);
 
         showTypingIndicator();
         
-        const response = await fetch('https://python22.pythonanywhere.com/api/brighten-image', {
+        // Try test route first
+        console.log("🧪 Trying test route...");
+        const testResponse = await fetch('https://python22.pythonanywhere.com/api/test-image', {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`
@@ -717,60 +717,77 @@ async function handleImageUpload(event) {
             body: formData
         });
 
-        const result = await response.json();
-        removeTypingIndicator();
+        const testResult = await testResponse.json();
+        console.log("🧪 Test result:", testResult);
 
-        if (result.success) {
-            // Show success message
-            showMessage(result.message, "ai");
+        if (testResult.success) {
+            removeTypingIndicator();
+            showMessage("✅ Backend is working! Now trying enhancement...", "ai");
             
-            // Show BEFORE & AFTER comparison
-            const comparisonDiv = document.createElement('div');
-            comparisonDiv.className = 'message ai-message';
-            comparisonDiv.innerHTML = `
-                <div class="message-content">
-                    <div class="comparison-container">
-                        <div class="image-comparison">
-                            <div class="image-half">
-                                <strong>Original</strong>
-                                <img src="${result.original_image}" alt="Original" class="uploaded-image">
+            // Now try brightening
+            showTypingIndicator();
+            console.log("🎨 Trying brightening...");
+            
+            const brightResponse = await fetch('https://python22.pythonanywhere.com/api/brighten-image', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                body: formData
+            });
+
+            const brightResult = await brightResponse.json();
+            console.log("🎨 Brightening result:", brightResult);
+            removeTypingIndicator();
+
+            if (brightResult.success) {
+                showMessage(brightResult.message, "ai");
+                
+                // Show comparison
+                const comparisonDiv = document.createElement('div');
+                comparisonDiv.className = 'message ai-message';
+                comparisonDiv.innerHTML = `
+                    <div class="message-content">
+                        <div class="comparison-container">
+                            <div class="image-comparison">
+                                <div class="image-half">
+                                    <strong>Original</strong>
+                                    <img src="${brightResult.original_image}" alt="Original" class="uploaded-image">
+                                </div>
+                                <div class="image-half">
+                                    <strong>Brightened</strong>
+                                    <img src="${brightResult.enhanced_image}" alt="Enhanced" class="uploaded-image">
+                                </div>
                             </div>
-                            <div class="image-half">
-                                <strong>Enhanced</strong>
-                                <img src="${result.enhanced_image}" alt="Enhanced" class="uploaded-image">
+                            <div class="edit-changes">
+                                <strong>✨ Improvements:</strong>
+                                <ul>
+                                    ${brightResult.improvements.map(imp => `<li>${imp}</li>`).join('')}
+                                </ul>
                             </div>
-                        </div>
-                        <div class="edit-changes">
-                            <strong>✨ Visible Improvements:</strong>
-                            <ul>
-                                ${result.improvements.map(imp => `<li>${imp}</li>`).join('')}
-                            </ul>
-                            <p style="margin-top: 8px; font-size: 12px; opacity: 0.8;">
-                                <strong>Note:</strong> The enhanced version is significantly brighter and clearer!
-                            </p>
                         </div>
                     </div>
-                </div>
-            `;
-            document.getElementById('messagesContainer').appendChild(comparisonDiv);
-            scrollAfterMessage();
+                `;
+                document.getElementById('messagesContainer').appendChild(comparisonDiv);
+                scrollAfterMessage();
+            } else {
+                showMessage("❌ Brightening failed: " + brightResult.error, "ai");
+            }
             
         } else {
-            showMessage("❌ " + result.error, "ai");
-            // Fallback to simple analysis
-            analyzeImageOnly(file);
+            removeTypingIndicator();
+            showMessage("❌ Backend test failed: " + testResult.error, "ai");
         }
         
     } catch (error) {
         removeTypingIndicator();
-        console.error('Image upload error:', error);
-        showMessage("❌ Upload failed. Please try a different image format.", "ai");
+        console.error("🔥 Frontend error:", error);
+        showMessage("❌ Network error: " + error.message, "ai");
     } finally {
         uploadBtn.innerHTML = '<i class="fas fa-image"></i>';
         document.getElementById('imageInput').value = '';
     }
 }
-
 // Fallback function if enhancement fails
 async function analyzeImageOnly(file) {
     try {
