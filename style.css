@@ -39,6 +39,9 @@
     color: var(--text-color);
     height: 100vh;
     transition: var(--transition);
+        margin: 0;
+  padding: 0;
+  overflow-x: hidden; /* Ye line
   }
   
   
