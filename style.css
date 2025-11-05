@@ -1994,3 +1994,63 @@
 .dark-mode .edit-changes li {
     color: #a0aec0;
 }
+
+
+
+/* Image Size Fix - ChatGPT Style */
+.uploaded-image {
+    max-width: 300px !important;
+    max-height: 300px !important;
+    width: auto;
+    height: auto;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    border: 1px solid #e1e5e9;
+    display: block;
+    margin: 5px 0;
+}
+
+.dark-mode .uploaded-image {
+    border-color: #4a5568;
+}
+
+.image-message {
+    margin: 10px 0;
+    max-width: 100%;
+}
+
+.image-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    font-size: 13px;
+    color: #666;
+    padding: 6px 12px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    flex-wrap: wrap;
+}
+
+.dark-mode .image-info {
+    background: #2d3748;
+    border-color: #4a5568;
+    color: #a0aec0;
+}
+
+.file-icon {
+    font-size: 14px;
+}
+
+.file-name {
+    font-weight: 500;
+    flex: 1;
+    min-width: 150px;
+}
+
+.file-size {
+    color: #6c757d;
+    font-size: 12px;
+    white-space: nowrap;
+}
