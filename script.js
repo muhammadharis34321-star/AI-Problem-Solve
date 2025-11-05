@@ -654,17 +654,10 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 });
 
-// ✅ IMPROVED AUTO IMAGE EDITING
+// ✅ ENHANCED IMAGE EDITING WITH REAL EFFECTS
 async function handleImageUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
-
-    // Check file type
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp'];
-    if (!allowedTypes.includes(file.type)) {
-        showMessage("❌ Please upload a valid image file (JPEG, PNG, GIF, WebP, BMP)", "ai");
-        return;
-    }
 
     const uploadBtn = document.getElementById('uploadBtn');
     const originalHTML = uploadBtn.innerHTML;
@@ -705,14 +698,14 @@ async function handleImageUpload(event) {
             return;
         }
 
-        // ✅ AUTO ENHANCE THE IMAGE
+        // ✅ APPLY REAL ENHANCEMENTS
         const formData = new FormData();
         formData.append('image', file);
 
-        // Show typing indicator
         showTypingIndicator();
         
-        const response = await fetch('https://python22.pythonanywhere.com/api/auto-edit-image', {
+        // Use whiten-image for stronger effect
+        const response = await fetch('https://python22.pythonanywhere.com/api/whiten-image', {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`
@@ -724,31 +717,35 @@ async function handleImageUpload(event) {
         removeTypingIndicator();
 
         if (result.success) {
-            // Show enhanced image and message
+            // Show enhanced image
             showMessage(result.message, "ai");
             
-            // Show the enhanced image
-            const enhancedMessageDiv = document.createElement('div');
-            enhancedMessageDiv.className = 'message ai-message';
-            enhancedMessageDiv.innerHTML = `
+            // Show BEFORE & AFTER comparison
+            const comparisonDiv = document.createElement('div');
+            comparisonDiv.className = 'message ai-message';
+            comparisonDiv.innerHTML = `
                 <div class="message-content">
-                    <div class="image-message">
-                        <img src="${result.edited_image}" alt="Enhanced Image" class="uploaded-image">
-                        <div class="image-info">
-                            <span class="file-icon">✨</span>
-                            <span class="file-name">Enhanced Version</span>
-                            <span class="file-size">(AI Optimized)</span>
+                    <div class="comparison-container">
+                        <div class="image-comparison">
+                            <div class="image-half">
+                                <strong>Original</strong>
+                                <img src="${result.original_image}" alt="Original" class="uploaded-image">
+                            </div>
+                            <div class="image-half">
+                                <strong>Enhanced</strong>
+                                <img src="${result.enhanced_image}" alt="Enhanced" class="uploaded-image">
+                            </div>
                         </div>
-                    </div>
-                    <div class="edit-changes">
-                        <strong>Improvements Applied:</strong>
-                        <ul>
-                            ${result.changes_applied.map(change => `<li>${change}</li>`).join('')}
-                        </ul>
+                        <div class="edit-changes">
+                            <strong>✨ Visible Improvements:</strong>
+                            <ul>
+                                ${result.improvements.map(imp => `<li>${imp}</li>`).join('')}
+                            </ul>
+                        </div>
                     </div>
                 </div>
             `;
-            document.getElementById('messagesContainer').appendChild(enhancedMessageDiv);
+            document.getElementById('messagesContainer').appendChild(comparisonDiv);
             scrollAfterMessage();
             
         } else {
@@ -758,10 +755,9 @@ async function handleImageUpload(event) {
     } catch (error) {
         removeTypingIndicator();
         console.error('Image upload error:', error);
-        showMessage("❌ Image processing failed. Please try a different image.", "ai");
+        showMessage("❌ Image processing failed. Please try again.", "ai");
     } finally {
         uploadBtn.innerHTML = '<i class="fas fa-image"></i>';
-        document.getElementById('fileName').textContent = '';
         document.getElementById('imageInput').value = '';
     }
 }
