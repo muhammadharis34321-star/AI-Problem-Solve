@@ -140,7 +140,7 @@ const translations = {
       thanks:
         "Je vous en prie ! Y a-t-il autre chose avec laquelle je peux vous aider ?",
       image:
-        "Je vois que vous avez partagé une image. Bien que je ne puisse pas traiter directement les images dans cette démo, je peux vous aider avec :\n• Questions sur les formats d'image\n• Concepts de traitement d'image\n• Dépannage des problèmes d'image\n• Meilleures pratiques pour l'optimisation d'image\n\nComment puis-je vous aider avec les images ?",
+        "Je vois que vous avez partagé uma imagen. Bien que je ne puisse pas traiter directement les images dans cette démo, je peux vous aider avec :\n• Questions sur les formats d'image\n• Concepts de traitement d'image\n• Dépannage des problèmes d'image\n• Meilleures pratiques pour l'optimisation d'image\n\nComment puis-je vous aider avec les images ?",
       problem:
         "Je serais ravi de vous aider à résoudre ce problème ! Pourriez-vous fournir plus de détails sur le problème spécifique que vous rencontrez ? Plus vous me donnez d'informations, mieux je peux vous aider.",
       default: [
@@ -252,7 +252,7 @@ const translations = {
     title2: "MUHAMMAD HARIS",
     welcomeTitle: "AI 問題解決",
     welcomeMessage:
-      "今日はどのようにお手伝いできますか？問題解決、画像処理など、さまざまなサポートが可能です！",
+      "今日はどのようにお手伝いできますか？问题解决、画像処理など、さまざまなサポートが可能です！",
     newChat: "新しいチャット",
     clearHistory: "履歴をクリア",
     settings: "設定",
@@ -654,531 +654,626 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 });
 
-async function sendMessage() {
-  const message = userInput.value.trim();
+// ✅ FIXED: Single Image Upload - ChatGPT Style
+async function handleImageUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
 
-  let imageBase64 = "";
-  if (currentImage) {
-    imageBase64 = currentImage.split(",")[1] || currentImage;
-  }
-
-  if (!message && !imageBase64) return;
-
-  if (welcomeMessage) {
-    welcomeMessage.style.display = "none";
-  }
-
-  addMessageToChat("user", message, currentImage);
-  userInput.value = "";
-  userInput.style.height = "auto";
-
-  if (isAIActive) {
-    showTypingIndicator();
-
+    const uploadBtn = document.getElementById('uploadBtn');
+    const originalHTML = uploadBtn.innerHTML;
+    uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    
     try {
-      console.log("🔄 Backend connection trying...");
+        // ✅ SIRF EK HI IMAGE PREVIEW SHOW KARO
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const messagesContainer = document.getElementById('messagesContainer');
+            const welcomeMessage = document.getElementById('welcomeMessage');
+            
+            if(welcomeMessage) welcomeMessage.style.display = 'none';
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message user-message';
+            messageDiv.innerHTML = `
+                <div class="message-content">
+                    <div class="image-message">
+                        <img src="${e.target.result}" alt="Uploaded Image" style="max-width: 300px; border-radius: 10px;">
+                        <div style="font-size: 12px; color: #666; margin-top: 5px;">📷 ${file.name}</div>
+                    </div>
+                </div>
+            `;
+            messagesContainer.appendChild(messageDiv);
+            scrollAfterMessage();
+        };
+        reader.readAsDataURL(file);
 
-      // ✅ FIX: GET TOKEN FROM LOCALSTORAGE
-      const token = localStorage.getItem('token');
-      console.log("🔑 Token from localStorage:", token ? "Exists" : "Missing");
-      
-      const headers = {
-        "Content-Type": "application/json",
-      };
-      
-      // ✅ FIX: ADD AUTHORIZATION HEADER IF TOKEN EXISTS
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-        console.log("✅ Token added to request");
-      }
-
-      const response = await fetch(
-        "https://python22.pythonanywhere.com/api/chat",
-        {
-          method: "POST",
-          headers: headers,
-          body: JSON.stringify({
-            message: message,
-            image: imageBase64,
-            conversation_id: currentConversationId || "default",
-            language: currentLanguage,
-          }),
-          mode: "cors",
-          credentials: "omit",
+        // Get user token
+        const token = localStorage.getItem('token');
+        if (!token) {
+            throw new Error('Please login to use image analysis');
         }
-      );
 
-      console.log("📡 Backend response status:", response.status);
+        // Send to backend for AI analysis
+        const formData = new FormData();
+        formData.append('image', file);
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log("🤖 AI Response data:", data);
-
-      removeTypingIndicator();
-
-      if (data && data.success !== false && data.response) {
-        console.log("✅ Using backend AI response");
-        addMessageToChat("ai", data.response);
+        // Show typing indicator
+        showTypingIndicator();
         
-        // ✅ SHOW REMAINING MESSAGES INFO
-        if (data.remaining_messages !== undefined && data.remaining_messages !== "unlimited") {
-          console.log(`📝 Remaining guest messages: ${data.remaining_messages}`);
+        const response = await fetch('https://python22.pythonanywhere.com/api/process-image', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+            body: formData
+        });
+
+        const result = await response.json();
+        removeTypingIndicator();
+
+        if (result.success) {
+            showMessage(result.analysis, "ai");
+        } else {
+            showMessage("❌ " + result.error, "ai");
         }
-      } else {
-        console.log("❌ Backend error, using fallback");
-        const fallbackResponse = generateAIResponse(message);
-        addMessageToChat("ai", fallbackResponse);
-      }
-
-      saveConversation();
+        
     } catch (error) {
-      console.error("❌ Backend connection failed:", error);
-      removeTypingIndicator();
-
-      console.log("🔄 Using local AI fallback");
-      const fallbackResponse = generateAIResponse(message);
-      addMessageToChat("ai", fallbackResponse);
-      saveConversation();
+        removeTypingIndicator();
+        console.error('Image upload error:', error);
+        showMessage("❌ Image processing failed. Please try again.", "ai");
+    } finally {
+        uploadBtn.innerHTML = '<i class="fas fa-image"></i>';
+        document.getElementById('fileName').textContent = '';
+        document.getElementById('imageInput').value = '';
     }
-  } else {
-    saveConversation();
-  }
-
-  currentImage = null;
-  fileName.textContent = "";
 }
+
+// ✅ FIXED: Send Message - No Image in Regular Chat
+async function sendMessage() {
+    const message = userInput.value.trim();
+
+    // ✅ SIRF TEXT MESSAGE - NO IMAGE
+    if (!message) return;
+
+    if (welcomeMessage) {
+        welcomeMessage.style.display = "none";
+    }
+
+    addMessageToChat("user", message); // ✅ NO IMAGE HERE
+    userInput.value = "";
+    userInput.style.height = "auto";
+
+    if (isAIActive) {
+        showTypingIndicator();
+
+        try {
+            const token = localStorage.getItem('token');
+            
+            const headers = {
+                "Content-Type": "application/json",
+            };
+            
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
+            const response = await fetch(
+                "https://python22.pythonanywhere.com/api/chat",
+                {
+                    method: "POST",
+                    headers: headers,
+                    body: JSON.stringify({
+                        message: message,
+                        conversation_id: currentConversationId || "default",
+                        language: currentLanguage,
+                    }),
+                    mode: "cors",
+                    credentials: "omit",
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            removeTypingIndicator();
+
+            if (data && data.success !== false && data.response) {
+                addMessageToChat("ai", data.response);
+            } else {
+                const fallbackResponse = generateAIResponse(message);
+                addMessageToChat("ai", fallbackResponse);
+            }
+
+            saveConversation();
+        } catch (error) {
+            removeTypingIndicator();
+            const fallbackResponse = generateAIResponse(message);
+            addMessageToChat("ai", fallbackResponse);
+            saveConversation();
+        }
+    } else {
+        saveConversation();
+    }
+}
+
 function addMessageToChat(sender, message, image = null) {
-  const messageDiv = document.createElement("div");
-  messageDiv.className = `message ${sender}-message`;
+    const messageDiv = document.createElement("div");
+    messageDiv.className = `message ${sender}-message`;
 
-  const now = new Date();
-  const timeString = now.toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+    const now = new Date();
+    const timeString = now.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+    });
 
-  let content = `
-      <div class="message-header">
-        <img src="${
-          sender === "user"
-            ? profilePicture.src
-            : "https://cdn-icons-png.flaticon.com/512/4712/4712035.png"
-        }" 
-             alt="${sender === "user" ? "User" : "AI"}" class="message-avatar">
-        <div class="message-sender">${
-          sender === "user"
-            ? translations[currentLanguage].you
-            : translations[currentLanguage].aiAssistant
-        }</div>
-      </div>
+    let content = `
+        <div class="message-header">
+            <img src="${
+                sender === "user"
+                ? profilePicture.src
+                : "https://cdn-icons-png.flaticon.com/512/4712/4712035.png"
+            }" 
+                alt="${sender === "user" ? "User" : "AI"}" class="message-avatar">
+            <div class="message-sender">${
+                sender === "user"
+                ? translations[currentLanguage].you
+                : translations[currentLanguage].aiAssistant
+            }</div>
+        </div>
     `;
 
-  if (image) {
-    content += `<div class="message-image"><img src="${image}" alt="Uploaded image"></div>`;
-  }
-  if (message) {
-    content += `<div class="message-text">${escapeHtml(message)}</div>`;
-  }
+    if (image) {
+        content += `<div class="message-image"><img src="${image}" alt="Uploaded image"></div>`;
+    }
+    if (message) {
+        content += `<div class="message-text">${escapeHtml(message)}</div>`;
+    }
 
-  content += `<div class="message-time">${timeString}</div>`;
+    content += `<div class="message-time">${timeString}</div>`;
 
-  messageDiv.innerHTML = content;
-  messagesContainer.appendChild(messageDiv);
-  chatContainer.scrollTop = chatContainer.scrollHeight;
+    messageDiv.innerHTML = content;
+    messagesContainer.appendChild(messageDiv);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
 
-  if (!currentConversationId) {
-    currentConversationId = Date.now().toString();
-  }
+    if (!currentConversationId) {
+        currentConversationId = Date.now().toString();
+    }
 
-  if (!conversations.find((c) => c.id === currentConversationId)) {
-    conversations.push({
-      id: currentConversationId,
-      messages: [],
+    if (!conversations.find((c) => c.id === currentConversationId)) {
+        conversations.push({
+            id: currentConversationId,
+            messages: [],
+        });
+    }
+
+    const currentConv = conversations.find((c) => c.id === currentConversationId);
+    currentConv.messages.push({
+        sender: sender,
+        message: message,
+        image: image,
+        timestamp: now.getTime(),
     });
-  }
-
-  const currentConv = conversations.find((c) => c.id === currentConversationId);
-  currentConv.messages.push({
-    sender: sender,
-    message: message,
-    image: image,
-    timestamp: now.getTime(),
-  });
 }
 
 function showTypingIndicator() {
-  const typingDiv = document.createElement("div");
-  typingDiv.className = "message ai-message typing-indicator";
-  typingDiv.id = "typingIndicator";
-  typingDiv.innerHTML = `
-      <div class="message-header">
-        <img src=""https://cdn-icons-png.flaticon.com/512/4712/4712035.png"
-        <div class="message-sender">${translations[currentLanguage].aiAssistant}</div>
-      </div>
-      <div class="typing-dots">
-        <div class="typing-dot"></div>
-        <div class="typing-dot"></div>
-        <div class="typing-dot"></div>
-      </div>
+    const typingDiv = document.createElement("div");
+    typingDiv.className = "message ai-message typing-indicator";
+    typingDiv.id = "typingIndicator";
+    typingDiv.innerHTML = `
+        <div class="message-header">
+            <img src="https://cdn-icons-png.flaticon.com/512/4712/4712035.png" alt="AI" class="message-avatar">
+            <div class="message-sender">${translations[currentLanguage].aiAssistant}</div>
+        </div>
+        <div class="typing-dots">
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+        </div>
     `;
-  messagesContainer.appendChild(typingDiv);
-  chatContainer.scrollTop = chatContainer.scrollHeight;
+    messagesContainer.appendChild(typingDiv);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
 }
 
 function removeTypingIndicator() {
-  const typingIndicator = document.getElementById("typingIndicator");
-  if (typingIndicator) {
-    typingIndicator.remove();
-  }
+    const typingIndicator = document.getElementById("typingIndicator");
+    if (typingIndicator) {
+        typingIndicator.remove();
+    }
 }
 
 function generateAIResponse(userMessage) {
-  const lang = translations[currentLanguage];
-  let response = "";
+    const lang = translations[currentLanguage];
+    let response = "";
 
-  const lowerMessage = userMessage.toLowerCase();
+    const lowerMessage = userMessage.toLowerCase();
 
-  if (
-    lowerMessage.includes("hello") ||
-    lowerMessage.includes("hi") ||
-    lowerMessage.includes("hey")
-  ) {
-    response = lang.aiResponses.hello;
-  } else if (lowerMessage.includes("help")) {
-    response = lang.aiResponses.help;
-  } else if (lowerMessage.includes("thank")) {
-    response = lang.aiResponses.thanks;
-  } else if (lowerMessage.includes("image") || currentImage) {
-    response = lang.aiResponses.image;
-  } else if (lowerMessage.includes("problem")) {
-    response = lang.aiResponses.problem;
-  } else {
-    const responses = lang.aiResponses.default;
-    response = responses[Math.floor(Math.random() * responses.length)];
-  }
+    if (
+        lowerMessage.includes("hello") ||
+        lowerMessage.includes("hi") ||
+        lowerMessage.includes("hey")
+    ) {
+        response = lang.aiResponses.hello;
+    } else if (lowerMessage.includes("help")) {
+        response = lang.aiResponses.help;
+    } else if (lowerMessage.includes("thank")) {
+        response = lang.aiResponses.thanks;
+    } else if (lowerMessage.includes("image")) {
+        response = lang.aiResponses.image;
+    } else if (lowerMessage.includes("problem")) {
+        response = lang.aiResponses.problem;
+    } else {
+        const responses = lang.aiResponses.default;
+        response = responses[Math.floor(Math.random() * responses.length)];
+    }
 
-  return response;
-}
-
-function handleImageUpload(event) {
-  const file = event.target.files[0];
-  if (file) {
-    const reader = new FileReader();
-    reader.onload = function (e) {
-      currentImage = e.target.result;
-      fileName.textContent = file.name;
-    };
-    reader.readAsDataURL(file);
-  }
+    return response;
 }
 
 function startNewChat() {
-  if (conversations.length > 0 && messagesContainer.children.length > 0) {
-    if (confirm("Start a new chat? Your current conversation will be saved.")) {
-      messagesContainer.innerHTML = "";
-      if (welcomeMessage) {
-        welcomeMessage.style.display = "block";
-      }
-      currentImage = null;
-      fileName.textContent = "";
-      currentConversationId = null;
-      saveConversation();
+    if (conversations.length > 0 && messagesContainer.children.length > 0) {
+        if (confirm("Start a new chat? Your current conversation will be saved.")) {
+            messagesContainer.innerHTML = "";
+            if (welcomeMessage) {
+                welcomeMessage.style.display = "block";
+            }
+            currentImage = null;
+            fileName.textContent = "";
+            currentConversationId = null;
+            saveConversation();
+        }
+    } else {
+        messagesContainer.innerHTML = "";
+        if (welcomeMessage) {
+            welcomeMessage.style.display = "block";
+        }
+        currentImage = null;
+        fileName.textContent = "";
+        currentConversationId = null;
     }
-  } else {
-    messagesContainer.innerHTML = "";
-    if (welcomeMessage) {
-      welcomeMessage.style.display = "block";
-    }
-    currentImage = null;
-    fileName.textContent = "";
-    currentConversationId = null;
-  }
 }
 
 function clearChatHistory() {
-  const lang = translations[currentLanguage];
-  if (confirm(lang.confirmClear)) {
-    conversations = [];
-    localStorage.setItem("aiConversations", JSON.stringify(conversations));
-    messagesContainer.innerHTML = "";
-    if (welcomeMessage) {
-      welcomeMessage.style.display = "block";
+    const lang = translations[currentLanguage];
+    if (confirm(lang.confirmClear)) {
+        conversations = [];
+        localStorage.setItem("aiConversations", JSON.stringify(conversations));
+        messagesContainer.innerHTML = "";
+        if (welcomeMessage) {
+            welcomeMessage.style.display = "block";
+        }
+        currentConversationId = null;
+        currentImage = null;
+        fileName.textContent = "";
     }
-    currentConversationId = null;
-    currentImage = null;
-    fileName.textContent = "";
-  }
 }
 
 function changeLanguage() {
-  currentLanguage = languageSelect.value;
-  updateLanguage();
-  localStorage.setItem("language", currentLanguage);
+    currentLanguage = languageSelect.value;
+    updateLanguage();
+    localStorage.setItem("language", currentLanguage);
 }
 
 function updateLanguage() {
-  const lang = translations[currentLanguage];
+    const lang = translations[currentLanguage];
 
-  if (welcomeUsername) welcomeUsername.textContent = lang.welcome;
-  if (welcomeTitle) welcomeTitle.textContent = lang.welcomeTitle;
-  if (welcomeText) welcomeText.textContent = lang.welcomeMessage;
+    if (welcomeUsername) welcomeUsername.textContent = lang.welcome;
+    if (welcomeTitle) welcomeTitle.textContent = lang.welcomeTitle;
+    if (welcomeText) welcomeText.textContent = lang.welcomeMessage;
 
-  const newChatElement = document.querySelector("#newChat .btn-text");
-  if (newChatElement) newChatElement.textContent = lang.newChat;
+    const newChatElement = document.querySelector("#newChat .btn-text");
+    if (newChatElement) newChatElement.textContent = lang.newChat;
 
-  const clearHistoryElement = document.querySelector("#clearHistory .btn-text");
-  if (clearHistoryElement) clearHistoryElement.textContent = lang.clearHistory;
+    const clearHistoryElement = document.querySelector("#clearHistory .btn-text");
+    if (clearHistoryElement) clearHistoryElement.textContent = lang.clearHistory;
 
-  userInput.placeholder = lang.placeholder;
+    userInput.placeholder = lang.placeholder;
 
-  updateMessagesLanguage();
+    updateMessagesLanguage();
 }
 
 function updateMessagesLanguage() {
-  const messageSenders = document.querySelectorAll(".message-sender");
-  const lang = translations[currentLanguage];
+    const messageSenders = document.querySelectorAll(".message-sender");
+    const lang = translations[currentLanguage];
 
-  messageSenders.forEach((sender) => {
-    const message = sender.closest(".message");
-    if (message.classList.contains("user-message")) {
-      sender.textContent = lang.you;
-    } else if (message.classList.contains("ai-message")) {
-      sender.textContent = lang.aiAssistant;
-    }
-  });
+    messageSenders.forEach((sender) => {
+        const message = sender.closest(".message");
+        if (message.classList.contains("user-message")) {
+            sender.textContent = lang.you;
+        } else if (message.classList.contains("ai-message")) {
+            sender.textContent = lang.aiAssistant;
+        }
+    });
 }
 
 function toggleDarkMode() {
-  if (darkModeToggle.checked) {
-    document.body.classList.add("dark-mode");
-    localStorage.setItem("darkMode", "enabled");
-  } else {
-    document.body.classList.remove("dark-mode");
-    localStorage.setItem("darkMode", "disabled");
-  }
+    if (darkModeToggle.checked) {
+        document.body.classList.add("dark-mode");
+        localStorage.setItem("darkMode", "enabled");
+    } else {
+        document.body.classList.remove("dark-mode");
+        localStorage.setItem("darkMode", "disabled");
+    }
 }
 
 function changeProfilePicture() {
-  const input = document.createElement("input");
-  input.type = "file";
-  input.accept = "image/*";
-  input.onchange = function (e) {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = function (e) {
-        profilePicture.src = e.target.result;
-        localStorage.setItem("profilePicture", e.target.result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-  input.click();
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+    input.onchange = function (e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                profilePicture.src = e.target.result;
+                localStorage.setItem("profilePicture", e.target.result);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+    input.click();
 }
 
 function removeProfilePicture() {
-  if (confirm("Remove your profile picture?")) {
-    profilePicture.src = "https://via.placeholder.com/80";
-    localStorage.removeItem("profilePicture");
-  }
+    if (confirm("Remove your profile picture?")) {
+        profilePicture.src = "https://via.placeholder.com/80";
+        localStorage.removeItem("profilePicture");
+    }
 }
 
 function openSettings() {
-  settingsModal.style.display = "flex";
-  loadHistory();
+    settingsModal.style.display = "flex";
+    loadHistory();
 }
 
 function saveSettingsChanges() {
-  document.documentElement.style.setProperty("--text-color", currentTextColor);
-  localStorage.setItem("textColor", currentTextColor);
-  settingsModal.style.display = "none";
+    document.documentElement.style.setProperty("--text-color", currentTextColor);
+    localStorage.setItem("textColor", currentTextColor);
+    settingsModal.style.display = "none";
 }
 
 function toggleAI() {
-  isAIActive = !isAIActive;
-  const lang = translations[currentLanguage];
-  aiToggle.innerHTML = `<i class="fas fa-robot"></i> <span class="btn-text"> ${
-    isAIActive ? lang.aiOn : "OFF"
-  }</span>`;
-  aiToggle.style.background = isAIActive ? "" : "#e74c3c";
+    isAIActive = !isAIActive;
+    const lang = translations[currentLanguage];
+    aiToggle.innerHTML = `<i class="fas fa-robot"></i> <span class="btn-text"> ${
+        isAIActive ? lang.aiOn : "OFF"
+    }</span>`;
+    aiToggle.style.background = isAIActive ? "" : "#e74c3c";
 }
 
 function toggleSidebar() {
-  sidebar.classList.toggle("active");
+    sidebar.classList.toggle("active");
 }
 
 function saveConversation() {
-  localStorage.setItem("aiConversations", JSON.stringify(conversations));
+    localStorage.setItem("aiConversations", JSON.stringify(conversations));
 }
 
 function loadConversations() {
-  if (conversations.length > 0) {
-    const recentConv = conversations[conversations.length - 1];
-    currentConversationId = recentConv.id;
+    if (conversations.length > 0) {
+        const recentConv = conversations[conversations.length - 1];
+        currentConversationId = recentConv.id;
 
-    if (welcomeMessage) welcomeMessage.style.display = "none";
-    recentConv.messages.forEach((msg) => {
-      addMessageToChat(msg.sender, msg.message, msg.image);
-    });
-  }
+        if (welcomeMessage) welcomeMessage.style.display = "none";
+        recentConv.messages.forEach((msg) => {
+            addMessageToChat(msg.sender, msg.message, msg.image);
+        });
+    }
 }
 
 function escapeHtml(text) {
-  const div = document.createElement("div");
-  div.textContent = text;
-  return div.innerHTML;
+    const div = document.createElement("div");
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 function updateWelcomeMessage() {
-  const lang = translations[currentLanguage];
-  if (welcomeUsername) {
-    welcomeUsername.textContent = `${lang.welcome.split(",")[0]}, ${username}`;
-  }
+    const lang = translations[currentLanguage];
+    if (welcomeUsername) {
+        welcomeUsername.textContent = `${lang.welcome.split(",")[0]}, ${username}`;
+    }
 }
 
 function switchTab(tabName) {
-  tabButtons.forEach((button) => {
-    if (button.getAttribute("data-tab") === tabName) {
-      button.classList.add("active");
-    } else {
-      button.classList.remove("active");
-    }
-  });
+    tabButtons.forEach((button) => {
+        if (button.getAttribute("data-tab") === tabName) {
+            button.classList.add("active");
+        } else {
+            button.classList.remove("active");
+        }
+    });
 
-  tabPanes.forEach((pane) => {
-    if (pane.id === `${tabName}Tab`) {
-      pane.classList.add("active");
-    } else {
-      pane.classList.remove("active");
-    }
-  });
+    tabPanes.forEach((pane) => {
+        if (pane.id === `${tabName}Tab`) {
+            pane.classList.add("active");
+        } else {
+            pane.classList.remove("active");
+        }
+    });
 
-  if (tabName === "history") {
-    loadHistory();
-  }
+    if (tabName === "history") {
+        loadHistory();
+    }
 }
 
 function loadHistory() {
-  historyList.innerHTML = "";
+    historyList.innerHTML = "";
 
-  if (conversations.length === 0) {
-    const lang = translations[currentLanguage];
-    historyList.innerHTML = `<div class="no-history">${lang.noMessages}</div>`;
-    return;
-  }
-
-  conversations.forEach((conversation, index) => {
-    const historyItem = document.createElement("div");
-    historyItem.className = "history-item";
-
-    let previewText = "Empty conversation";
-    if (conversation.messages.length > 0) {
-      const userMessage = conversation.messages.find(
-        (msg) => msg.sender === "user"
-      );
-      if (userMessage) {
-        previewText = userMessage.message.substring(0, 50);
-        if (userMessage.message.length > 50) {
-          previewText += "...";
-        }
-      }
+    if (conversations.length === 0) {
+        const lang = translations[currentLanguage];
+        historyList.innerHTML = `<div class="no-history">${lang.noMessages}</div>`;
+        return;
     }
 
-    historyItem.innerHTML = `
-        <div class="history-item-content">${previewText}</div>
-        <div class="history-item-actions">
-          <button class="history-btn view" data-index="${index}">View</button>
-          <button class="history-btn delete" data-index="${index}">Delete</button>
-        </div>
-      `;
+    conversations.forEach((conversation, index) => {
+        const historyItem = document.createElement("div");
+        historyItem.className = "history-item";
 
-    historyList.appendChild(historyItem);
-  });
+        let previewText = "Empty conversation";
+        if (conversation.messages.length > 0) {
+            const userMessage = conversation.messages.find(
+                (msg) => msg.sender === "user"
+            );
+            if (userMessage) {
+                previewText = userMessage.message.substring(0, 50);
+                if (userMessage.message.length > 50) {
+                    previewText += "...";
+                }
+            }
+        }
 
-  document.querySelectorAll(".history-btn.view").forEach((btn) => {
-    btn.addEventListener("click", function () {
-      const index = this.getAttribute("data-index");
-      viewConversation(index);
+        historyItem.innerHTML = `
+            <div class="history-item-content">${previewText}</div>
+            <div class="history-item-actions">
+                <button class="history-btn view" data-index="${index}">View</button>
+                <button class="history-btn delete" data-index="${index}">Delete</button>
+            </div>
+        `;
+
+        historyList.appendChild(historyItem);
     });
-  });
 
-  document.querySelectorAll(".history-btn.delete").forEach((btn) => {
-    btn.addEventListener("click", function () {
-      const index = this.getAttribute("data-index");
-      deleteConversation(index);
+    document.querySelectorAll(".history-btn.view").forEach((btn) => {
+        btn.addEventListener("click", function () {
+            const index = this.getAttribute("data-index");
+            viewConversation(index);
+        });
     });
-  });
+
+    document.querySelectorAll(".history-btn.delete").forEach((btn) => {
+        btn.addEventListener("click", function () {
+            const index = this.getAttribute("data-index");
+            deleteConversation(index);
+        });
+    });
 }
 
 function viewConversation(index) {
-  const conversation = conversations[index];
-  if (!conversation) return;
+    const conversation = conversations[index];
+    if (!conversation) return;
 
-  messagesContainer.innerHTML = "";
+    messagesContainer.innerHTML = "";
 
-  conversation.messages.forEach((msg) => {
-    addMessageToChat(msg.sender, msg.message, msg.image);
-  });
+    conversation.messages.forEach((msg) => {
+        addMessageToChat(msg.sender, msg.message, msg.image);
+    });
 
-  currentConversationId = conversation.id;
+    currentConversationId = conversation.id;
 
-  if (welcomeMessage) {
-    welcomeMessage.style.display = "none";
-  }
+    if (welcomeMessage) {
+        welcomeMessage.style.display = "none";
+    }
 
-  settingsModal.style.display = "none";
+    settingsModal.style.display = "none";
 }
 
 function deleteConversation(index) {
-  if (confirm("Are you sure you want to delete this conversation?")) {
-    conversations.splice(index, 1);
-    localStorage.setItem("aiConversations", JSON.stringify(conversations));
-    loadHistory();
+    if (confirm("Are you sure you want to delete this conversation?")) {
+        conversations.splice(index, 1);
+        localStorage.setItem("aiConversations", JSON.stringify(conversations));
+        loadHistory();
 
-    if (
-      currentConversationId &&
-      !conversations.find((c) => c.id === currentConversationId)
-    ) {
-      startNewChat();
+        if (
+            currentConversationId &&
+            !conversations.find((c) => c.id === currentConversationId)
+        ) {
+            startNewChat();
+        }
     }
-  }
 }
 
 function clearAllHistoryHandler() {
-  const lang = translations[currentLanguage];
-  if (confirm(lang.confirmClear)) {
-    conversations = [];
-    localStorage.setItem("aiConversations", JSON.stringify(conversations));
-    loadHistory();
-    startNewChat();
-  }
+    const lang = translations[currentLanguage];
+    if (confirm(lang.confirmClear)) {
+        conversations = [];
+        localStorage.setItem("aiConversations", JSON.stringify(conversations));
+        loadHistory();
+        startNewChat();
+    }
 }
 
 // Color picker functionality
 Array.from(textColorPicker.children).forEach((option) => {
-  option.addEventListener("click", function () {
-    Array.from(textColorPicker.children).forEach((opt) =>
-      opt.classList.remove("active")
-    );
-    this.classList.add("active");
-    currentTextColor = this.getAttribute("data-color");
-  });
+    option.addEventListener("click", function () {
+        Array.from(textColorPicker.children).forEach((opt) =>
+            opt.classList.remove("active")
+        );
+        this.classList.add("active");
+        currentTextColor = this.getAttribute("data-color");
+    });
 });
+
+// ✅ AUTO SCROLL CODE - ChatGPT jaisa smooth auto scroll
+function autoScrollToBottom() {
+    const messagesContainer = document.getElementById('messagesContainer');
+    if (messagesContainer) {
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+}
+
+function smoothAutoScroll() {
+    const messagesContainer = document.getElementById('messagesContainer');
+    if (messagesContainer) {
+        messagesContainer.scrollTo({
+            top: messagesContainer.scrollHeight,
+            behavior: 'smooth'
+        });
+    }
+}
+
+function scrollAfterMessage() {
+    setTimeout(() => {
+        smoothAutoScroll();
+    }, 50);
+}
+
+function scrollAfterAIResponse() {
+    setTimeout(() => {
+        smoothAutoScroll();
+    }, 100);
+}
+
+// Page load par scroll to bottom
+window.addEventListener('load', function() {
+    setTimeout(() => {
+        autoScrollToBottom();
+    }, 500);
+});
+
+// Real-time auto scroll observer
+function initAutoScrollObserver() {
+    const messagesContainer = document.getElementById('messagesContainer');
+    
+    if (messagesContainer) {
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'childList') {
+                    scrollAfterMessage();
+                }
+            });
+        });
+        
+        observer.observe(messagesContainer, {
+            childList: true,
+            subtree: true
+        });
+    }
+}
+
+// Initialize auto scroll
+initAutoScrollObserver();
 
 // Page load pe automatically test karo
 window.addEventListener("load", function () {
-  console.log("✅ AI Problem Solve Ready!");
-  // Auto-test backend connection
-  setTimeout(() => {
-    fetch("https://python22.pythonanywhere.com/api/health")
-      .then((response) => response.json())
-      .then((data) => console.log("🔧 Backend Status:", data.status))
-      .catch((err) => console.log("⚠️ Backend Check:", err));
-  }, 1000);
+    console.log("✅ AI Problem Solve Ready!");
+    // Auto-test backend connection
+    setTimeout(() => {
+        fetch("https://python22.pythonanywhere.com/api/health")
+            .then((response) => response.json())
+            .then((data) => console.log("🔧 Backend Status:", data.status))
+            .catch((err) => console.log("⚠️ Backend Check:", err));
+    }, 1000);
 });
 
 console.log("🎯 AI Problem Solve JavaScript Loaded Successfully!");
-
