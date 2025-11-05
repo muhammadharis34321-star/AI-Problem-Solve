@@ -654,10 +654,17 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 });
 
-// ✅ AUTO IMAGE EDITING FEATURE
+// ✅ IMPROVED AUTO IMAGE EDITING
 async function handleImageUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
+
+    // Check file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp'];
+    if (!allowedTypes.includes(file.type)) {
+        showMessage("❌ Please upload a valid image file (JPEG, PNG, GIF, WebP, BMP)", "ai");
+        return;
+    }
 
     const uploadBtn = document.getElementById('uploadBtn');
     const originalHTML = uploadBtn.innerHTML;
@@ -698,7 +705,7 @@ async function handleImageUpload(event) {
             return;
         }
 
-        // ✅ AUTO ENHANCE THE IMAGE (ChatGPT Style)
+        // ✅ AUTO ENHANCE THE IMAGE
         const formData = new FormData();
         formData.append('image', file);
 
@@ -729,7 +736,7 @@ async function handleImageUpload(event) {
                         <img src="${result.edited_image}" alt="Enhanced Image" class="uploaded-image">
                         <div class="image-info">
                             <span class="file-icon">✨</span>
-                            <span class="file-name">Enhanced Image</span>
+                            <span class="file-name">Enhanced Version</span>
                             <span class="file-size">(AI Optimized)</span>
                         </div>
                     </div>
@@ -751,14 +758,13 @@ async function handleImageUpload(event) {
     } catch (error) {
         removeTypingIndicator();
         console.error('Image upload error:', error);
-        showMessage("❌ Image processing failed. Please try again.", "ai");
+        showMessage("❌ Image processing failed. Please try a different image.", "ai");
     } finally {
         uploadBtn.innerHTML = '<i class="fas fa-image"></i>';
         document.getElementById('fileName').textContent = '';
         document.getElementById('imageInput').value = '';
     }
 }
-
 // ✅ FIXED: Send Message Function - Text Only
 async function sendMessage() {
     const message = userInput.value.trim();
