@@ -653,18 +653,23 @@ document.addEventListener("DOMContentLoaded", function () {
     updateLanguage();
   }
 });
-
-// ✅ ENHANCED IMAGE EDITING WITH REAL EFFECTS
+// ✅ SIMPLE & WORKING IMAGE ENHANCEMENT
 async function handleImageUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
+
+    // Check file size
+    if (file.size > 10 * 1024 * 1024) {
+        showMessage("❌ Image too large! Please select image under 10MB", "ai");
+        return;
+    }
 
     const uploadBtn = document.getElementById('uploadBtn');
     const originalHTML = uploadBtn.innerHTML;
     uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
     
     try {
-        // Image preview
+        // Show original image preview
         const reader = new FileReader();
         reader.onload = function(e) {
             const messagesContainer = document.getElementById('messagesContainer');
@@ -677,7 +682,7 @@ async function handleImageUpload(event) {
             messageDiv.innerHTML = `
                 <div class="message-content">
                     <div class="image-message">
-                        <img src="${e.target.result}" alt="Uploaded Image" class="uploaded-image">
+                        <img src="${e.target.result}" alt="Original Image" class="uploaded-image">
                         <div class="image-info">
                             <span class="file-icon">📷</span>
                             <span class="file-name">${file.name}</span>
@@ -694,18 +699,17 @@ async function handleImageUpload(event) {
         // Get user token
         const token = localStorage.getItem('token');
         if (!token) {
-            showMessage("🔐 Please login to use image editing features", "ai");
+            showMessage("🔐 Please login to use image enhancement", "ai");
             return;
         }
 
-        // ✅ APPLY REAL ENHANCEMENTS
+        // ✅ USE BRIGHTEN-IMAGE FOR BETTER RESULTS
         const formData = new FormData();
         formData.append('image', file);
 
         showTypingIndicator();
         
-        // Use whiten-image for stronger effect
-        const response = await fetch('https://python22.pythonanywhere.com/api/whiten-image', {
+        const response = await fetch('https://python22.pythonanywhere.com/api/brighten-image', {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`
@@ -717,7 +721,7 @@ async function handleImageUpload(event) {
         removeTypingIndicator();
 
         if (result.success) {
-            // Show enhanced image
+            // Show success message
             showMessage(result.message, "ai");
             
             // Show BEFORE & AFTER comparison
@@ -741,6 +745,9 @@ async function handleImageUpload(event) {
                             <ul>
                                 ${result.improvements.map(imp => `<li>${imp}</li>`).join('')}
                             </ul>
+                            <p style="margin-top: 8px; font-size: 12px; opacity: 0.8;">
+                                <strong>Note:</strong> The enhanced version is significantly brighter and clearer!
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -750,15 +757,41 @@ async function handleImageUpload(event) {
             
         } else {
             showMessage("❌ " + result.error, "ai");
+            // Fallback to simple analysis
+            analyzeImageOnly(file);
         }
         
     } catch (error) {
         removeTypingIndicator();
         console.error('Image upload error:', error);
-        showMessage("❌ Image processing failed. Please try again.", "ai");
+        showMessage("❌ Upload failed. Please try a different image format.", "ai");
     } finally {
         uploadBtn.innerHTML = '<i class="fas fa-image"></i>';
         document.getElementById('imageInput').value = '';
+    }
+}
+
+// Fallback function if enhancement fails
+async function analyzeImageOnly(file) {
+    try {
+        const token = localStorage.getItem('token');
+        const formData = new FormData();
+        formData.append('image', file);
+
+        const response = await fetch('https://python22.pythonanywhere.com/api/process-image', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+            body: formData
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            showMessage(result.analysis, "ai");
+        }
+    } catch (error) {
+        showMessage("❌ Image processing failed", "ai");
     }
 }
 // ✅ FIXED: Send Message Function - Text Only
