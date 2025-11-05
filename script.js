@@ -654,7 +654,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 });
 
-// ✅ FIXED: ChatGPT Style Image Upload & Processing
+// ✅ AUTO IMAGE EDITING FEATURE
 async function handleImageUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -664,7 +664,7 @@ async function handleImageUpload(event) {
     uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
     
     try {
-        // ✅ Step 1: Image Preview Show Karo (ChatGPT Style)
+        // Image preview
         const reader = new FileReader();
         reader.onload = function(e) {
             const messagesContainer = document.getElementById('messagesContainer');
@@ -677,8 +677,12 @@ async function handleImageUpload(event) {
             messageDiv.innerHTML = `
                 <div class="message-content">
                     <div class="image-message">
-                        <img src="${e.target.result}" alt="Uploaded Image" style="max-width: 300px; border-radius: 10px;">
-                        <div style="font-size: 12px; color: #666; margin-top: 5px;">📷 ${file.name}</div>
+                        <img src="${e.target.result}" alt="Uploaded Image" class="uploaded-image">
+                        <div class="image-info">
+                            <span class="file-icon">📷</span>
+                            <span class="file-name">${file.name}</span>
+                            <span class="file-size">(${(file.size / 1024 / 1024).toFixed(2)} MB)</span>
+                        </div>
                     </div>
                 </div>
             `;
@@ -687,20 +691,21 @@ async function handleImageUpload(event) {
         };
         reader.readAsDataURL(file);
 
-        // ✅ Step 2: Get User Token
+        // Get user token
         const token = localStorage.getItem('token');
         if (!token) {
-            throw new Error('Please login to use image analysis');
+            showMessage("🔐 Please login to use image editing features", "ai");
+            return;
         }
 
-        // ✅ Step 3: Send to Backend for AI Analysis
+        // ✅ AUTO ENHANCE THE IMAGE (ChatGPT Style)
         const formData = new FormData();
         formData.append('image', file);
 
         // Show typing indicator
         showTypingIndicator();
         
-        const response = await fetch('https://python22.pythonanywhere.com/api/process-image', {
+        const response = await fetch('https://python22.pythonanywhere.com/api/auto-edit-image', {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`
@@ -712,8 +717,33 @@ async function handleImageUpload(event) {
         removeTypingIndicator();
 
         if (result.success) {
-            // ✅ Step 4: AI Response Show Karo
-            showMessage(result.analysis, "ai");
+            // Show enhanced image and message
+            showMessage(result.message, "ai");
+            
+            // Show the enhanced image
+            const enhancedMessageDiv = document.createElement('div');
+            enhancedMessageDiv.className = 'message ai-message';
+            enhancedMessageDiv.innerHTML = `
+                <div class="message-content">
+                    <div class="image-message">
+                        <img src="${result.edited_image}" alt="Enhanced Image" class="uploaded-image">
+                        <div class="image-info">
+                            <span class="file-icon">✨</span>
+                            <span class="file-name">Enhanced Image</span>
+                            <span class="file-size">(AI Optimized)</span>
+                        </div>
+                    </div>
+                    <div class="edit-changes">
+                        <strong>Improvements Applied:</strong>
+                        <ul>
+                            ${result.changes_applied.map(change => `<li>${change}</li>`).join('')}
+                        </ul>
+                    </div>
+                </div>
+            `;
+            document.getElementById('messagesContainer').appendChild(enhancedMessageDiv);
+            scrollAfterMessage();
+            
         } else {
             showMessage("❌ " + result.error, "ai");
         }
