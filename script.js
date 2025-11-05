@@ -654,7 +654,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 });
 
-// ✅ FIXED: Single Image Upload - ChatGPT Style
+// ✅ FIXED: ChatGPT Style Image Upload & Processing
 async function handleImageUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -664,7 +664,7 @@ async function handleImageUpload(event) {
     uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
     
     try {
-        // ✅ SIRF EK HI IMAGE PREVIEW SHOW KARO
+        // ✅ Step 1: Image Preview Show Karo (ChatGPT Style)
         const reader = new FileReader();
         reader.onload = function(e) {
             const messagesContainer = document.getElementById('messagesContainer');
@@ -687,13 +687,13 @@ async function handleImageUpload(event) {
         };
         reader.readAsDataURL(file);
 
-        // Get user token
+        // ✅ Step 2: Get User Token
         const token = localStorage.getItem('token');
         if (!token) {
             throw new Error('Please login to use image analysis');
         }
 
-        // Send to backend for AI analysis
+        // ✅ Step 3: Send to Backend for AI Analysis
         const formData = new FormData();
         formData.append('image', file);
 
@@ -712,6 +712,7 @@ async function handleImageUpload(event) {
         removeTypingIndicator();
 
         if (result.success) {
+            // ✅ Step 4: AI Response Show Karo
             showMessage(result.analysis, "ai");
         } else {
             showMessage("❌ " + result.error, "ai");
@@ -728,18 +729,17 @@ async function handleImageUpload(event) {
     }
 }
 
-// ✅ FIXED: Send Message - No Image in Regular Chat
+// ✅ FIXED: Send Message Function - Text Only
 async function sendMessage() {
     const message = userInput.value.trim();
 
-    // ✅ SIRF TEXT MESSAGE - NO IMAGE
     if (!message) return;
 
     if (welcomeMessage) {
         welcomeMessage.style.display = "none";
     }
 
-    addMessageToChat("user", message); // ✅ NO IMAGE HERE
+    addMessageToChat("user", message); // ✅ Text message only
     userInput.value = "";
     userInput.style.height = "auto";
 
@@ -796,6 +796,40 @@ async function sendMessage() {
     } else {
         saveConversation();
     }
+}
+
+// ✅ Helper Function: Message Display
+function showMessage(message, sender) {
+    const messagesContainer = document.getElementById('messagesContainer');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${sender}-message`;
+    
+    const now = new Date();
+    const timeString = now.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+    });
+
+    messageDiv.innerHTML = `
+        <div class="message-header">
+            <img src="${
+                sender === "user"
+                ? profilePicture.src
+                : "https://cdn-icons-png.flaticon.com/512/4712/4712035.png"
+            }" 
+                alt="${sender === "user" ? "User" : "AI"}" class="message-avatar">
+            <div class="message-sender">${
+                sender === "user"
+                ? translations[currentLanguage].you
+                : translations[currentLanguage].aiAssistant
+            }</div>
+        </div>
+        <div class="message-text">${escapeHtml(message)}</div>
+        <div class="message-time">${timeString}</div>
+    `;
+    
+    messagesContainer.appendChild(messageDiv);
+    scrollAfterMessage();
 }
 
 function addMessageToChat(sender, message, image = null) {
