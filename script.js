@@ -670,7 +670,7 @@ function compressImage(base64Data, maxWidth = 300) {
     });
 }
 
-// ✅ UPDATE handleImageUpload FUNCTION - COMPRESS ALL IMAGES
+// ✅ UPDATE handleImageUpload FUNCTION - SIRF 1 USER IMAGE AUR 1 AI IMAGE SAVE KARO
 async function handleImageUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -705,7 +705,7 @@ async function handleImageUpload(event) {
             messagesContainer.appendChild(messageDiv);
             scrollAfterMessage();
             
-            // ✅ SAVE COMPRESSED USER IMAGE
+            // ✅ SIRF 1 USER IMAGE SAVE KARO
             addMessageToChat("user", "", compressedImage);
         };
         reader.readAsDataURL(file);
@@ -733,8 +733,7 @@ async function handleImageUpload(event) {
         removeTypingIndicator();
 
         if (brightResult.success) {
-            // ✅ COMPRESS AI IMAGES BEFORE SAVING
-            const compressedOriginal = await compressImage(brightResult.original_image);
+            // ✅ SIRF 1 AI IMAGE SAVE KARO (ENHANCED WALI)
             const compressedEnhanced = await compressImage(brightResult.enhanced_image);
             
             // ✅ AI IMAGES - MOBILE RESPONSIVE
@@ -744,11 +743,11 @@ async function handleImageUpload(event) {
                 <div class="message-content">
                     <div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; width: 100%; max-width: 100%;">
                         <div style="flex: 1 1 45%; min-width: 150px; text-align: center;">
-                            <img src="${compressedOriginal}" alt="Original" 
+                            <img src="${brightResult.original_image}" alt="Original" 
                                  style="max-width: 100%; height: auto; border-radius: 10px; object-fit: contain;">
                         </div>
                         <div style="flex: 1 1 45%; min-width: 150px; text-align: center;">
-                            <img src="${compressedEnhanced}" alt="Enhanced" 
+                            <img src="${brightResult.enhanced_image}" alt="Enhanced" 
                                  style="max-width: 100%; height: auto; border-radius: 10px; object-fit: contain;">
                         </div>
                     </div>
@@ -757,9 +756,8 @@ async function handleImageUpload(event) {
             document.getElementById('messagesContainer').appendChild(comparisonDiv);
             scrollAfterMessage();
             
-            // ✅ SAVE COMPRESSED AI IMAGES
-            addMessageToChat("ai", "Image processed successfully", compressedOriginal);
-            // You can save both images if needed, but one is enough to show the comparison
+            // ✅ SIRF 1 AI IMAGE SAVE KARO (ENHANCED WALI)
+            addMessageToChat("ai", "Image processed successfully", compressedEnhanced);
         }
         
     } catch (error) {
