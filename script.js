@@ -641,7 +641,6 @@ document.addEventListener("DOMContentLoaded", function () {
     updateLanguage();
   }
 });
-// ✅ DEBUGGING VERSION - Image Upload
 async function handleImageUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -653,7 +652,7 @@ async function handleImageUpload(event) {
     uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
     
     try {
-        // Show original image - WITH FORCED SMALL SIZE
+        // Show original image
         const reader = new FileReader();
         reader.onload = function(e) {
             const messagesContainer = document.getElementById('messagesContainer');
@@ -664,17 +663,12 @@ async function handleImageUpload(event) {
             const messageDiv = document.createElement('div');
             messageDiv.className = 'message user-message';
             
-            // ✅ YAHAN DIRECT STYLE ADD KARO
+            // ✅ SIRF IMAGE - KOI TEXT NAHI
             messageDiv.innerHTML = `
                 <div class="message-content">
                     <div class="image-message">
                         <img src="${e.target.result}" alt="Original" 
-                             style="max-width: 250px; max-height: 250px; width: auto; height: auto; border-radius: 10px; display: block;">
-                        <div class="image-info">
-                            <span class="file-icon">📷</span>
-                            <span class="file-name">${file.name}</span>
-                            <span class="file-size">(${(file.size / 1024 / 1024).toFixed(2)} MB)</span>
-                        </div>
+                             style="max-width: 300px; max-height: 300px; width: auto; height: auto; border-radius: 10px; display: block;">
                     </div>
                 </div>
             `;
@@ -686,21 +680,15 @@ async function handleImageUpload(event) {
         // Get token
         const token = localStorage.getItem('token');
         if (!token) {
-            showMessage("🔐 Please login first", "ai");
             return;
         }
 
-        console.log("🔑 Token found, sending to backend...");
-
-        // ✅ FIRST TEST WITH SIMPLE ROUTE
         const formData = new FormData();
         formData.append('image', file);
 
         showTypingIndicator();
         
-        // Try test route first
-        console.log("🧪 Trying test route...");
-        const testResponse = await fetch('https://python22.pythonanywhere.com/api/test-image', {
+        const brightResponse = await fetch('https://python22.pythonanywhere.com/api/brighten-image', {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`
@@ -708,74 +696,34 @@ async function handleImageUpload(event) {
             body: formData
         });
 
-        const testResult = await testResponse.json();
-        console.log("🧪 Test result:", testResult);
+        const brightResult = await brightResponse.json();
+        removeTypingIndicator();
 
-        if (testResult.success) {
-            removeTypingIndicator();
-            showMessage();
-            
-            // Now try brightening
-            showTypingIndicator();
-            console.log("🎨 Trying brightening...");
-            
-            const brightResponse = await fetch('https://python22.pythonanywhere.com/api/brighten-image', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                },
-                body: formData
-            });
-
-            const brightResult = await brightResponse.json();
-            console.log("🎨 Brightening result:", brightResult);
-            removeTypingIndicator();
-
-            if (brightResult.success) {
-                showMessage(brightResult.message, "ai");
-                
-                // Show comparison - WITH FORCED SMALL SIZE
-                const comparisonDiv = document.createElement('div');
-                comparisonDiv.className = 'message ai-message';
-                comparisonDiv.innerHTML = `
-                    <div class="message-content">
-                        <div class="comparison-container">
-                            <div class="image-comparison">
-                                <div class="image-half">
-                                    <strong>Original</strong>
-                                    <img src="${brightResult.original_image}" alt="Original" 
-                                         style="max-width: 250px; max-height: 250px; width: auto; height: auto; border-radius: 10px;">
-                                </div>
-                                <div class="image-half">
-                                    <strong>Brightened</strong>
-                                    <img src="${brightResult.enhanced_image}" alt="Enhanced" 
-                                         style="max-width: 250px; max-height: 250px; width: auto; height: auto; border-radius: 10px;">
-                                </div>
-                            </div>
-                            <div class="edit-changes">
-                                <strong>✨ Improvements:</strong>
-                                <ul>
-                                    ${brightResult.improvements.map(imp => `<li>${imp}</li>`).join('')}
-                                </ul>
-                            </div>
+        if (brightResult.success) {
+            // ✅ SIRF IMAGES - KOI TEXT NAHI
+            const comparisonDiv = document.createElement('div');
+            comparisonDiv.className = 'message ai-message';
+            comparisonDiv.innerHTML = `
+                <div class="message-content">
+                    <div style="display: flex; gap: 10px; justify-content: center;">
+                        <div>
+                            <img src="${brightResult.original_image}" alt="Original" 
+                                 style="max-width: 300px; max-height: 300px; width: auto; height: auto; border-radius: 10px;">
+                        </div>
+                        <div>
+                            <img src="${brightResult.enhanced_image}" alt="Enhanced" 
+                                 style="max-width: 300px; max-height: 300px; width: auto; height: auto; border-radius: 10px;">
                         </div>
                     </div>
-                `;
-                document.getElementById('messagesContainer').appendChild(comparisonDiv);
-                scrollAfterMessage();
-            } else {
-                showMessage("❌ Brightening failed: " + brightResult.error, "ai");
-            }
-            
-        } else {
-            removeTypingIndicator();
-            showMessage("❌ Backend test failed: " + testResult.error, "ai");
+                </div>
+            `;
+            document.getElementById('messagesContainer').appendChild(comparisonDiv);
+            scrollAfterMessage();
         }
         
     } catch (error) {
         removeTypingIndicator();
         console.error("🔥 Frontend error:", error);
-        showMessage("❌ Network error: " + error.message, "ai");
     } finally {
         uploadBtn.innerHTML = '<i class="fas fa-image"></i>';
         document.getElementById('imageInput').value = '';
