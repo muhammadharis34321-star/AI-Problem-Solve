@@ -1,4 +1,4 @@
-const translations = {
+ const translations = {
   en: {
     welcome: "Welcome, User",
     title1: "AI PROBLEM SOLVE",
@@ -670,7 +670,7 @@ function compressImage(base64Data, maxWidth = 300) {
     });
 }
 
-// ✅ UPDATE handleImageUpload FUNCTION - SIRF 2 IMAGES SAVE KARO
+// ✅ UPDATE handleImageUpload FUNCTION - COMPRESS ALL IMAGES
 async function handleImageUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -680,6 +680,36 @@ async function handleImageUpload(event) {
     uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
     
     try {
+        // Show original image
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+            const messagesContainer = document.getElementById('messagesContainer');
+            const welcomeMessage = document.getElementById('welcomeMessage');
+            
+            if(welcomeMessage) welcomeMessage.style.display = 'none';
+            
+            // ✅ COMPRESS USER IMAGE BEFORE SAVING
+            const compressedImage = await compressImage(e.target.result);
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message user-message';
+            
+            messageDiv.innerHTML = `
+                <div class="message-content">
+                    <div class="image-message">
+                        <img src="${compressedImage}" alt="Original" 
+                             style="max-width: 100%; height: auto; border-radius: 10px; display: block;">
+                    </div>
+                </div>
+            `;
+            messagesContainer.appendChild(messageDiv);
+            scrollAfterMessage();
+            
+            // ✅ SAVE COMPRESSED USER IMAGE
+            addMessageToChat("user", "", compressedImage);
+        };
+        reader.readAsDataURL(file);
+
         // Get token
         const token = localStorage.getItem('token');
         if (!token) {
@@ -703,42 +733,33 @@ async function handleImageUpload(event) {
         removeTypingIndicator();
 
         if (brightResult.success) {
-            const messagesContainer = document.getElementById('messagesContainer');
-            const welcomeMessage = document.getElementById('welcomeMessage');
+            // ✅ COMPRESS AI IMAGES BEFORE SAVING
+            const compressedOriginal = await compressImage(brightResult.original_image);
+            const compressedEnhanced = await compressImage(brightResult.enhanced_image);
             
-            if(welcomeMessage) welcomeMessage.style.display = 'none';
-            
-            // ✅ SIRF 1 USER IMAGE SAVE KARO (ORIGINAL)
-            const userMessageDiv = document.createElement('div');
-            userMessageDiv.className = 'message user-message';
-            userMessageDiv.innerHTML = `
+            // ✅ AI IMAGES - MOBILE RESPONSIVE
+            const comparisonDiv = document.createElement('div');
+            comparisonDiv.className = 'message ai-message';
+            comparisonDiv.innerHTML = `
                 <div class="message-content">
-                    <div class="image-message">
-                        <img src="${brightResult.original_image}" alt="Original" 
-                             style="max-width: 100%; height: auto; border-radius: 10px; display: block;">
+                    <div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; width: 100%; max-width: 100%;">
+                        <div style="flex: 1 1 45%; min-width: 150px; text-align: center;">
+                            <img src="${compressedOriginal}" alt="Original" 
+                                 style="max-width: 100%; height: auto; border-radius: 10px; object-fit: contain;">
+                        </div>
+                        <div style="flex: 1 1 45%; min-width: 150px; text-align: center;">
+                            <img src="${compressedEnhanced}" alt="Enhanced" 
+                                 style="max-width: 100%; height: auto; border-radius: 10px; object-fit: contain;">
+                        </div>
                     </div>
                 </div>
             `;
-            messagesContainer.appendChild(userMessageDiv);
-            
-            // ✅ SIRF 1 AI IMAGE SAVE KARO (ENHANCED)
-            const aiMessageDiv = document.createElement('div');
-            aiMessageDiv.className = 'message ai-message';
-            aiMessageDiv.innerHTML = `
-                <div class="message-content">
-                    <div class="image-message">
-                        <img src="${brightResult.enhanced_image}" alt="Enhanced" 
-                             style="max-width: 100%; height: auto; border-radius: 10px; display: block;">
-                    </div>
-                </div>
-            `;
-            messagesContainer.appendChild(aiMessageDiv);
-            
+            document.getElementById('messagesContainer').appendChild(comparisonDiv);
             scrollAfterMessage();
             
-            // ✅ SIRF 2 MESSAGES SAVE KARO - 1 USER + 1 AI
-            addMessageToChat("user", "", brightResult.original_image);
-            addMessageToChat("ai", "Image enhanced successfully", brightResult.enhanced_image);
+            // ✅ SAVE COMPRESSED AI IMAGES
+            addMessageToChat("ai", "Image processed successfully", compressedOriginal);
+            // You can save both images if needed, but one is enough to show the comparison
         }
         
     } catch (error) {
@@ -749,6 +770,7 @@ async function handleImageUpload(event) {
         document.getElementById('imageInput').value = '';
     }
 }
+
 // ✅ UPDATED addMessageToChat FUNCTION - SAVE ALL IMAGES
 function addMessageToChat(sender, message, image = null) {
     const messageDiv = document.createElement("div");
