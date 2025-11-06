@@ -663,7 +663,7 @@ async function handleImageUpload(event) {
             const messageDiv = document.createElement('div');
             messageDiv.className = 'message user-message';
             
-            // ✅ RESPONSIVE IMAGE STYLING
+            // ✅ USER IMAGE - RESPONSIVE
             messageDiv.innerHTML = `
                 <div class="message-content">
                     <div class="image-message">
@@ -700,17 +700,19 @@ async function handleImageUpload(event) {
         removeTypingIndicator();
 
         if (brightResult.success) {
-            // ✅ MOBILE RESPONSIVE COMPARISON
+            // ✅ AI IMAGES - MOBILE RESPONSIVE
             const comparisonDiv = document.createElement('div');
             comparisonDiv.className = 'message ai-message';
             comparisonDiv.innerHTML = `
                 <div class="message-content">
-                    <div class="image-comparison-responsive">
-                        <div class="image-pair">
+                    <div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; width: 100%; max-width: 100%;">
+                        <div style="flex: 1 1 45%; min-width: 150px; text-align: center;">
                             <img src="${brightResult.original_image}" alt="Original" 
-                                 class="responsive-image">
+                                 style="max-width: 100%; height: auto; border-radius: 10px; object-fit: contain;">
+                        </div>
+                        <div style="flex: 1 1 45%; min-width: 150px; text-align: center;">
                             <img src="${brightResult.enhanced_image}" alt="Enhanced" 
-                                 class="responsive-image">
+                                 style="max-width: 100%; height: auto; border-radius: 10px; object-fit: contain;">
                         </div>
                     </div>
                 </div>
