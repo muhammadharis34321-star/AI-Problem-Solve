@@ -424,6 +424,9 @@ const translations = {
 // ✅ AUTOMATIC FIX - Friends ke liye automatically work karega
 console.log("🚀 AI Problem Solve - Auto Fix Enabled");
 
+// ✅ BACKEND URL CONSTANT - EASY TO CHANGE
+const BACKEND_BASE_URL = "https://ai-problem-solve-backend.onrender.com";
+
 // Automatic URL fix
 const originalFetch = window.fetch;
 window.fetch = function (url, options = {}) {
@@ -434,8 +437,14 @@ window.fetch = function (url, options = {}) {
       url = url.replace("abc-123.ngrok.io", "python22.pythonanywhere.com");
     }
 
-    // Add CORS for all backend requests
+    // ✅ FIXED: Auto-replace PythonAnywhere URLs with working backend
     if (url.includes("python22.pythonanywhere.com")) {
+      console.log("🔄 Auto-replacing PythonAnywhere URL...");
+      url = url.replace("python22.pythonanywhere.com", "ai-problem-solve-backend.onrender.com");
+    }
+
+    // Add CORS for all backend requests
+    if (url.includes("ai-problem-solve-backend.onrender.com")) {
       options.mode = "cors";
       options.credentials = "omit";
     }
@@ -641,7 +650,8 @@ document.addEventListener("DOMContentLoaded", function () {
     updateLanguage();
   }
 });
-// ✅ DEBUGGING VERSION - Image Upload
+
+// ✅ FIXED: Image Upload Function
 async function handleImageUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -692,7 +702,7 @@ async function handleImageUpload(event) {
 
         console.log("🔑 Token found, sending to backend...");
 
-        // ✅ FIRST TEST WITH SIMPLE ROUTE
+        // ✅ FIXED URL
         const formData = new FormData();
         formData.append('image', file);
 
@@ -700,7 +710,7 @@ async function handleImageUpload(event) {
         
         // Try test route first
         console.log("🧪 Trying test route...");
-        const testResponse = await fetch('https://python22.pythonanywhere.com/api/test-image', {
+        const testResponse = await fetch(`${BACKEND_BASE_URL}/api/test-image`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`
@@ -713,13 +723,13 @@ async function handleImageUpload(event) {
 
         if (testResult.success) {
             removeTypingIndicator();
-            showMessage();
             
             // Now try brightening
             showTypingIndicator();
             console.log("🎨 Trying brightening...");
             
-            const brightResponse = await fetch('https://python22.pythonanywhere.com/api/brighten-image', {
+            // ✅ FIXED URL
+            const brightResponse = await fetch(`${BACKEND_BASE_URL}/api/brighten-image`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -781,6 +791,7 @@ async function handleImageUpload(event) {
         document.getElementById('imageInput').value = '';
     }
 }
+
 // Fallback function if enhancement fails
 async function analyzeImageOnly(file) {
     try {
@@ -788,7 +799,7 @@ async function analyzeImageOnly(file) {
         const formData = new FormData();
         formData.append('image', file);
 
-        const response = await fetch('https://python22.pythonanywhere.com/api/process-image', {
+        const response = await fetch(`${BACKEND_BASE_URL}/api/process-image`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`
@@ -804,6 +815,7 @@ async function analyzeImageOnly(file) {
         showMessage("❌ Image processing failed", "ai");
     }
 }
+
 // ✅ FIXED: Send Message Function - Text Only
 async function sendMessage() {
     const message = userInput.value.trim();
@@ -832,8 +844,9 @@ async function sendMessage() {
                 headers['Authorization'] = `Bearer ${token}`;
             }
 
+            // ✅ FIXED URL
             const response = await fetch(
-                "https://python22.pythonanywhere.com/api/chat",
+                `${BACKEND_BASE_URL}/api/chat`,
                 {
                     method: "POST",
                     headers: headers,
@@ -1373,12 +1386,13 @@ function initAutoScrollObserver() {
 // Initialize auto scroll
 initAutoScrollObserver();
 
-// Page load pe automatically test karo
+// ✅ FIXED: Health Check with new backend URL
 window.addEventListener("load", function () {
     console.log("✅ AI Problem Solve Ready!");
     // Auto-test backend connection
     setTimeout(() => {
-        fetch("https://python22.pythonanywhere.com/api/health")
+        // ✅ FIXED URL
+        fetch(`${BACKEND_BASE_URL}/api/health`)
             .then((response) => response.json())
             .then((data) => console.log("🔧 Backend Status:", data.status))
             .catch((err) => console.log("⚠️ Backend Check:", err));
