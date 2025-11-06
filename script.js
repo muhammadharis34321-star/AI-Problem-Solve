@@ -664,7 +664,7 @@ async function handleImageUpload(event) {
             const messageDiv = document.createElement('div');
             messageDiv.className = 'message user-message';
             
-            // ✅ YAHAN DIRECT STYLE ADD KARO - INLINE CSS
+            // ✅ YAHAN DIRECT STYLE ADD KARO
             messageDiv.innerHTML = `
                 <div class="message-content">
                     <div class="image-message">
@@ -682,7 +682,6 @@ async function handleImageUpload(event) {
             scrollAfterMessage();
         };
         reader.readAsDataURL(file);
-
 
         // Get token
         const token = localStorage.getItem('token');
@@ -714,7 +713,7 @@ async function handleImageUpload(event) {
 
         if (testResult.success) {
             removeTypingIndicator();
-            showMessage("✅ Backend is working! Now trying enhancement...", "ai");
+            showMessage();
             
             // Now try brightening
             showTypingIndicator();
@@ -735,7 +734,7 @@ async function handleImageUpload(event) {
             if (brightResult.success) {
                 showMessage(brightResult.message, "ai");
                 
-                // Show comparison
+                // Show comparison - WITH FORCED SMALL SIZE
                 const comparisonDiv = document.createElement('div');
                 comparisonDiv.className = 'message ai-message';
                 comparisonDiv.innerHTML = `
@@ -744,11 +743,13 @@ async function handleImageUpload(event) {
                             <div class="image-comparison">
                                 <div class="image-half">
                                     <strong>Original</strong>
-                                    <img src="${brightResult.original_image}" alt="Original" class="uploaded-image">
+                                    <img src="${brightResult.original_image}" alt="Original" 
+                                         style="max-width: 250px; max-height: 250px; width: auto; height: auto; border-radius: 10px;">
                                 </div>
                                 <div class="image-half">
                                     <strong>Brightened</strong>
-                                    <img src="${brightResult.enhanced_image}" alt="Enhanced" class="uploaded-image">
+                                    <img src="${brightResult.enhanced_image}" alt="Enhanced" 
+                                         style="max-width: 250px; max-height: 250px; width: auto; height: auto; border-radius: 10px;">
                                 </div>
                             </div>
                             <div class="edit-changes">
