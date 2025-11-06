@@ -653,7 +653,7 @@ async function handleImageUpload(event) {
     uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
     
     try {
-        // Show original image
+        // Show original image - WITH FORCED SMALL SIZE
         const reader = new FileReader();
         reader.onload = function(e) {
             const messagesContainer = document.getElementById('messagesContainer');
@@ -663,10 +663,13 @@ async function handleImageUpload(event) {
             
             const messageDiv = document.createElement('div');
             messageDiv.className = 'message user-message';
+            
+            // ✅ YAHAN DIRECT STYLE ADD KARO - INLINE CSS
             messageDiv.innerHTML = `
                 <div class="message-content">
                     <div class="image-message">
-                        <img src="${e.target.result}" alt="Original" class="uploaded-image">
+                        <img src="${e.target.result}" alt="Original" 
+                             style="max-width: 250px; max-height: 250px; width: auto; height: auto; border-radius: 10px; display: block;">
                         <div class="image-info">
                             <span class="file-icon">📷</span>
                             <span class="file-name">${file.name}</span>
@@ -679,6 +682,7 @@ async function handleImageUpload(event) {
             scrollAfterMessage();
         };
         reader.readAsDataURL(file);
+
 
         // Get token
         const token = localStorage.getItem('token');
