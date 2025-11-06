@@ -713,7 +713,7 @@ async function handleImageUpload(event) {
 
         if (testResult.success) {
             removeTypingIndicator();
-            showMessage("✅ Backend is working! Now trying enhancement...", "ai");
+            showMessage();
             
             // Now try brightening
             showTypingIndicator();
