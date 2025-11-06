@@ -2162,36 +2162,42 @@
     color: #aaa;
 }
 
-/* Image Size Control - Choti Images */
+/* Image Size Control - FORCE Choti Images */
 .uploaded-image {
     max-width: 250px !important;
     max-height: 250px !important;
+    width: auto !important;
+    height: auto !important;
     border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
 }
 
 .message-image img {
     max-width: 250px !important;
     max-height: 250px !important;
-    border-radius: 10px;
+    width: auto !important;
+    height: auto !important;
 }
 
-/* Dono sides (user aur AI) ke liye same chota size */
-.user-message .uploaded-image,
-.ai-message .uploaded-image,
-.user-message .message-image img, 
-.ai-message .message-image img {
+.user-message img,
+.ai-message img,
+.message-content img {
     max-width: 250px !important;
     max-height: 250px !important;
+    width: auto !important;
 }
 
-/* Comparison images bhi choti */
-.image-comparison img {
-    max-width: 250px !important;
-    max-height: 250px !important;
-}
-
+/* Comparison images ke liye bhi */
+.image-comparison img,
 .image-half img {
+    max-width: 250px !important;
+    max-height: 250px !important;
+}
+
+/* Direct image tag targeting */
+img[src*="data:image"],
+img[class*="image"],
+img[alt*="image"],
+img[alt*="Image"] {
     max-width: 250px !important;
     max-height: 250px !important;
 }
