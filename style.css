@@ -2182,12 +2182,12 @@ img[alt*="Image"] {
     object-fit: contain;
 }
 
-/* Message container ko bhi control karo */
+/* /* Message container ko bhi control karo */
 .message-image {
     max-width: 250px !important;
 }
 
-/* Comparison container fix */
+
 .image-comparison {
     max-width: 250px !important;
 }
@@ -2195,7 +2195,7 @@ img[alt*="Image"] {
 .image-half {
     max-width: 250px !important;
 }
-/* Mobile Responsive Images */
+
 .image-comparison-responsive {
     width: 100%;
     display: flex;
@@ -2217,7 +2217,7 @@ img[alt*="Image"] {
     border-radius: 10px;
     flex: 1 1 45%;
     min-width: 150px;
-}
+} 
 
 /* Mobile screens ke liye */
 @media (max-width: 768px) {
