@@ -1,4 +1,4 @@
- const translations = {
+const translations = {
   en: {
     welcome: "Welcome, User",
     title1: "AI PROBLEM SOLVE",
@@ -641,39 +641,12 @@ document.addEventListener("DOMContentLoaded", function () {
     updateLanguage();
   }
 });
-// ✅ COMPRESS ALL IMAGES (USER + AI)
-function compressImage(base64Data, maxWidth = 300) {
-    return new Promise((resolve) => {
-        const img = new Image();
-        img.onload = function() {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            
-            // Calculate new dimensions
-            let width = img.width;
-            let height = img.height;
-            
-            if (width > maxWidth) {
-                height = (height * maxWidth) / width;
-                width = maxWidth;
-            }
-            
-            canvas.width = width;
-            canvas.height = height;
-            
-            // Draw and compress
-            ctx.drawImage(img, 0, 0, width, height);
-            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
-            resolve(compressedBase64);
-        };
-        img.src = base64Data;
-    });
-}
-
-// ✅ UPDATE handleImageUpload FUNCTION - COMPRESS ALL IMAGES
+// ✅ DEBUGGING VERSION - Image Upload
 async function handleImageUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
+
+    console.log("📸 File selected:", file.name, file.size, file.type);
 
     const uploadBtn = document.getElementById('uploadBtn');
     const originalHTML = uploadBtn.innerHTML;
@@ -682,46 +655,49 @@ async function handleImageUpload(event) {
     try {
         // Show original image
         const reader = new FileReader();
-        reader.onload = async function(e) {
+        reader.onload = function(e) {
             const messagesContainer = document.getElementById('messagesContainer');
             const welcomeMessage = document.getElementById('welcomeMessage');
             
             if(welcomeMessage) welcomeMessage.style.display = 'none';
             
-            // ✅ COMPRESS USER IMAGE BEFORE SAVING
-            const compressedImage = await compressImage(e.target.result);
-            
             const messageDiv = document.createElement('div');
             messageDiv.className = 'message user-message';
-            
             messageDiv.innerHTML = `
                 <div class="message-content">
                     <div class="image-message">
-                        <img src="${compressedImage}" alt="Original" 
-                             style="max-width: 100%; height: auto; border-radius: 10px; display: block;">
+                        <img src="${e.target.result}" alt="Original" class="uploaded-image">
+                        <div class="image-info">
+                            <span class="file-icon">📷</span>
+                            <span class="file-name">${file.name}</span>
+                            <span class="file-size">(${(file.size / 1024 / 1024).toFixed(2)} MB)</span>
+                        </div>
                     </div>
                 </div>
             `;
             messagesContainer.appendChild(messageDiv);
             scrollAfterMessage();
-            
-            // ✅ SAVE COMPRESSED USER IMAGE
-            addMessageToChat("user", "", compressedImage);
         };
         reader.readAsDataURL(file);
 
         // Get token
         const token = localStorage.getItem('token');
         if (!token) {
+            showMessage("🔐 Please login first", "ai");
             return;
         }
 
+        console.log("🔑 Token found, sending to backend...");
+
+        // ✅ FIRST TEST WITH SIMPLE ROUTE
         const formData = new FormData();
         formData.append('image', file);
 
         showTypingIndicator();
         
-        const brightResponse = await fetch('https://python22.pythonanywhere.com/api/brighten-image', {
+        // Try test route first
+        console.log("🧪 Trying test route...");
+        const testResponse = await fetch('https://python22.pythonanywhere.com/api/test-image', {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`
@@ -729,173 +705,77 @@ async function handleImageUpload(event) {
             body: formData
         });
 
-        const brightResult = await brightResponse.json();
-        removeTypingIndicator();
+        const testResult = await testResponse.json();
+        console.log("🧪 Test result:", testResult);
 
-        if (brightResult.success) {
-            // ✅ COMPRESS AI IMAGES BEFORE SAVING
-            const compressedOriginal = await compressImage(brightResult.original_image);
-            const compressedEnhanced = await compressImage(brightResult.enhanced_image);
+        if (testResult.success) {
+            removeTypingIndicator();
+            showMessage("✅ Backend is working! Now trying enhancement...", "ai");
             
-            // ✅ AI IMAGES - MOBILE RESPONSIVE
-            const comparisonDiv = document.createElement('div');
-            comparisonDiv.className = 'message ai-message';
-            comparisonDiv.innerHTML = `
-                <div class="message-content">
-                    <div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; width: 100%; max-width: 100%;">
-                        <div style="flex: 1 1 45%; min-width: 150px; text-align: center;">
-                            <img src="${compressedOriginal}" alt="Original" 
-                                 style="max-width: 100%; height: auto; border-radius: 10px; object-fit: contain;">
-                        </div>
-                        <div style="flex: 1 1 45%; min-width: 150px; text-align: center;">
-                            <img src="${compressedEnhanced}" alt="Enhanced" 
-                                 style="max-width: 100%; height: auto; border-radius: 10px; object-fit: contain;">
+            // Now try brightening
+            showTypingIndicator();
+            console.log("🎨 Trying brightening...");
+            
+            const brightResponse = await fetch('https://python22.pythonanywhere.com/api/brighten-image', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                body: formData
+            });
+
+            const brightResult = await brightResponse.json();
+            console.log("🎨 Brightening result:", brightResult);
+            removeTypingIndicator();
+
+            if (brightResult.success) {
+                showMessage(brightResult.message, "ai");
+                
+                // Show comparison
+                const comparisonDiv = document.createElement('div');
+                comparisonDiv.className = 'message ai-message';
+                comparisonDiv.innerHTML = `
+                    <div class="message-content">
+                        <div class="comparison-container">
+                            <div class="image-comparison">
+                                <div class="image-half">
+                                    <strong>Original</strong>
+                                    <img src="${brightResult.original_image}" alt="Original" class="uploaded-image">
+                                </div>
+                                <div class="image-half">
+                                    <strong>Brightened</strong>
+                                    <img src="${brightResult.enhanced_image}" alt="Enhanced" class="uploaded-image">
+                                </div>
+                            </div>
+                            <div class="edit-changes">
+                                <strong>✨ Improvements:</strong>
+                                <ul>
+                                    ${brightResult.improvements.map(imp => `<li>${imp}</li>`).join('')}
+                                </ul>
+                            </div>
                         </div>
                     </div>
-                </div>
-            `;
-            document.getElementById('messagesContainer').appendChild(comparisonDiv);
-            scrollAfterMessage();
+                `;
+                document.getElementById('messagesContainer').appendChild(comparisonDiv);
+                scrollAfterMessage();
+            } else {
+                showMessage("❌ Brightening failed: " + brightResult.error, "ai");
+            }
             
-            // ✅ SAVE COMPRESSED AI IMAGES
-            addMessageToChat("ai", "Image processed successfully", compressedOriginal);
-            // You can save both images if needed, but one is enough to show the comparison
+        } else {
+            removeTypingIndicator();
+            showMessage("❌ Backend test failed: " + testResult.error, "ai");
         }
         
     } catch (error) {
         removeTypingIndicator();
         console.error("🔥 Frontend error:", error);
+        showMessage("❌ Network error: " + error.message, "ai");
     } finally {
         uploadBtn.innerHTML = '<i class="fas fa-image"></i>';
         document.getElementById('imageInput').value = '';
     }
 }
-
-// // ✅ UPDATED addMessageToChat FUNCTION - SAVE ALL IMAGES
-// function addMessageToChat(sender, message, image = null) {
-//     const messageDiv = document.createElement("div");
-//     messageDiv.className = `message ${sender}-message`;
-
-//     const now = new Date();
-//     const timeString = now.toLocaleTimeString([], {
-//         hour: "2-digit",
-//         minute: "2-digit",
-//     });
-
-//     let content = `
-//         <div class="message-header">
-//             <img src="${
-//                 sender === "user"
-//                 ? profilePicture.src
-//                 : "https://cdn-icons-png.flaticon.com/512/4712/4712035.png"
-//             }" 
-//                 alt="${sender === "user" ? "User" : "AI"}" class="message-avatar">
-//             <div class="message-sender">${
-//                 sender === "user"
-//                 ? translations[currentLanguage].you
-//                 : translations[currentLanguage].aiAssistant
-//             }</div>
-//         </div>
-//     `;
-
-//     if (image) {
-//         content += `
-//             <div class="message-image">
-//                 <img src="${image}" alt="Uploaded image" style="max-width: 100%; height: auto; border-radius: 10px;">
-//             </div>
-//         `;
-//     }
-    
-//     if (message) {
-//         content += `<div class="message-text">${escapeHtml(message)}</div>`;
-//     }
-
-//     content += `<div class="message-time">${timeString}</div>`;
-
-//     messageDiv.innerHTML = content;
-//     messagesContainer.appendChild(messageDiv);
-//     scrollAfterMessage();
-
-//     // Save to conversation history
-//     if (!currentConversationId) {
-//         currentConversationId = Date.now().toString();
-//     }
-
-//     if (!conversations.find((c) => c.id === currentConversationId)) {
-//         conversations.push({
-//             id: currentConversationId,
-//             messages: [],
-//         });
-//     }
-
-//     const currentConv = conversations.find((c) => c.id === currentConversationId);
-    
-//     // ✅ SAVE ALL IMAGES (USER + AI) - COMPRESSED
-//     currentConv.messages.push({
-//         sender: sender,
-//         message: message,
-//         image: image, // Save compressed image
-//         timestamp: now.getTime(),
-//     });
-    
-//     saveConversation();
-// }
-
-// ✅ UPDATED saveConversation WITH STORAGE MANAGEMENT
-function saveConversation() {
-    try {
-        // Save all conversations with compressed images
-        localStorage.setItem("aiConversations", JSON.stringify(conversations));
-    } catch (error) {
-        console.error("Error saving conversation:", error);
-        // If storage is full, clear old conversations
-        if (error.name === 'QuotaExceededError') {
-            console.log('Storage full! Keeping only recent 3 conversations.');
-            // Keep only last 3 conversations to free up space
-            conversations = conversations.slice(-3);
-            localStorage.setItem("aiConversations", JSON.stringify(conversations));
-        }
-    }
-}
-
-// ✅ UPDATED loadConversations FUNCTION
-function loadConversations() {
-    const saved = localStorage.getItem("aiConversations");
-    if (saved) {
-        try {
-            conversations = JSON.parse(saved);
-            
-            if (conversations.length > 0) {
-                const recentConv = conversations[conversations.length - 1];
-                currentConversationId = recentConv.id;
-
-                if (welcomeMessage) welcomeMessage.style.display = 'none';
-                
-                // Load all messages with compressed images
-                recentConv.messages.forEach((msg) => {
-                    addMessageToChat(msg.sender, msg.message, msg.image);
-                });
-            }
-        } catch (error) {
-            console.error("Error loading conversations:", error);
-            conversations = [];
-        }
-    }
-}
-
-// ✅ STORAGE CLEANUP FUNCTION (OPTIONAL)
-function cleanupOldConversations() {
-    // Keep only last 5 conversations to prevent storage issues
-    if (conversations.length > 5) {
-        conversations = conversations.slice(-5);
-        saveConversation();
-    }
-}
-
-// ✅ CALL CLEANUP ON PAGE LOAD
-document.addEventListener('DOMContentLoaded', function() {
-    cleanupOldConversations();
-});
 // Fallback function if enhancement fails
 async function analyzeImageOnly(file) {
     try {
@@ -1022,64 +902,64 @@ function showMessage(message, sender) {
     scrollAfterMessage();
 }
 
-// function addMessageToChat(sender, message, image = null) {
-//     const messageDiv = document.createElement("div");
-//     messageDiv.className = `message ${sender}-message`;
+function addMessageToChat(sender, message, image = null) {
+    const messageDiv = document.createElement("div");
+    messageDiv.className = `message ${sender}-message`;
 
-//     const now = new Date();
-//     const timeString = now.toLocaleTimeString([], {
-//         hour: "2-digit",
-//         minute: "2-digit",
-//     });
+    const now = new Date();
+    const timeString = now.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+    });
 
-//     let content = `
-//         <div class="message-header">
-//             <img src="${
-//                 sender === "user"
-//                 ? profilePicture.src
-//                 : "https://cdn-icons-png.flaticon.com/512/4712/4712035.png"
-//             }" 
-//                 alt="${sender === "user" ? "User" : "AI"}" class="message-avatar">
-//             <div class="message-sender">${
-//                 sender === "user"
-//                 ? translations[currentLanguage].you
-//                 : translations[currentLanguage].aiAssistant
-//             }</div>
-//         </div>
-//     `;
+    let content = `
+        <div class="message-header">
+            <img src="${
+                sender === "user"
+                ? profilePicture.src
+                : "https://cdn-icons-png.flaticon.com/512/4712/4712035.png"
+            }" 
+                alt="${sender === "user" ? "User" : "AI"}" class="message-avatar">
+            <div class="message-sender">${
+                sender === "user"
+                ? translations[currentLanguage].you
+                : translations[currentLanguage].aiAssistant
+            }</div>
+        </div>
+    `;
 
-//     if (image) {
-//         content += `<div class="message-image"><img src="${image}" alt="Uploaded image"></div>`;
-//     }
-//     if (message) {
-//         content += `<div class="message-text">${escapeHtml(message)}</div>`;
-//     }
+    if (image) {
+        content += `<div class="message-image"><img src="${image}" alt="Uploaded image"></div>`;
+    }
+    if (message) {
+        content += `<div class="message-text">${escapeHtml(message)}</div>`;
+    }
 
-//     content += `<div class="message-time">${timeString}</div>`;
+    content += `<div class="message-time">${timeString}</div>`;
 
-//     messageDiv.innerHTML = content;
-//     messagesContainer.appendChild(messageDiv);
-//     chatContainer.scrollTop = chatContainer.scrollHeight;
+    messageDiv.innerHTML = content;
+    messagesContainer.appendChild(messageDiv);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
 
-//     if (!currentConversationId) {
-//         currentConversationId = Date.now().toString();
-//     }
+    if (!currentConversationId) {
+        currentConversationId = Date.now().toString();
+    }
 
-//     if (!conversations.find((c) => c.id === currentConversationId)) {
-//         conversations.push({
-//             id: currentConversationId,
-//             messages: [],
-//         });
-//     }
+    if (!conversations.find((c) => c.id === currentConversationId)) {
+        conversations.push({
+            id: currentConversationId,
+            messages: [],
+        });
+    }
 
-//     const currentConv = conversations.find((c) => c.id === currentConversationId);
-//     currentConv.messages.push({
-//         sender: sender,
-//         message: message,
-//         image: image,
-//         timestamp: now.getTime(),
-//     });
-// }
+    const currentConv = conversations.find((c) => c.id === currentConversationId);
+    currentConv.messages.push({
+        sender: sender,
+        message: message,
+        image: image,
+        timestamp: now.getTime(),
+    });
+}
 
 function showTypingIndicator() {
     const typingDiv = document.createElement("div");
@@ -1498,17 +1378,6 @@ window.addEventListener("load", function () {
             .then((data) => console.log("🔧 Backend Status:", data.status))
             .catch((err) => console.log("⚠️ Backend Check:", err));
     }, 1000);
-});
-
-// Preload important resources
-window.addEventListener('load', function() {
-    // Preload AI avatar
-    const preloadImage = new Image();
-    preloadImage.src = "https://cdn-icons-png.flaticon.com/512/4712/4712035.png";
-    
-    // Preload user placeholder
-    const preloadUser = new Image(); 
-    preloadUser.src = "https://via.placeholder.com/80";
 });
 
 console.log("🎯 AI Problem Solve JavaScript Loaded Successfully!");
