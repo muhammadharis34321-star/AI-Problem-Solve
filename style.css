@@ -2162,42 +2162,36 @@
     color: #aaa;
 }
 
-/* Image Size Control - FORCE Choti Images */
-.uploaded-image {
-    max-width: 250px !important;
-    max-height: 250px !important;
-    width: auto !important;
-    height: auto !important;
-    border-radius: 10px;
-}
-
-.message-image img {
-    max-width: 250px !important;
-    max-height: 250px !important;
-    width: auto !important;
-    height: auto !important;
-}
-
+/* 🔥 IMAGE SIZE FIX - FORCE CHOTI IMAGES */
+.uploaded-image,
+.message-image img,
 .user-message img,
 .ai-message img,
-.message-content img {
-    max-width: 250px !important;
-    max-height: 250px !important;
-    width: auto !important;
-}
-
-/* Comparison images ke liye bhi */
+.message-content img,
 .image-comparison img,
-.image-half img {
-    max-width: 250px !important;
-    max-height: 250px !important;
-}
-
-/* Direct image tag targeting */
+.image-half img,
 img[src*="data:image"],
 img[class*="image"],
 img[alt*="image"],
 img[alt*="Image"] {
     max-width: 250px !important;
     max-height: 250px !important;
+    width: auto !important;
+    height: auto !important;
+    border-radius: 10px;
+    object-fit: contain;
+}
+
+/* Message container ko bhi control karo */
+.message-image {
+    max-width: 250px !important;
+}
+
+/* Comparison container fix */
+.image-comparison {
+    max-width: 250px !important;
+}
+
+.image-half {
+    max-width: 250px !important;
 }
