@@ -653,7 +653,7 @@ document.addEventListener("DOMContentLoaded", function () {
     updateLanguage();
   }
 });
-// ✅ DEBUGGING VERSION - Image Upload
+// ✅ SIMPLE IMAGE SIZE CONTROL - No compression
 async function handleImageUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -665,7 +665,7 @@ async function handleImageUpload(event) {
     uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
     
     try {
-        // Show original image
+        // Show image with controlled size
         const reader = new FileReader();
         reader.onload = function(e) {
             const messagesContainer = document.getElementById('messagesContainer');
@@ -678,7 +678,7 @@ async function handleImageUpload(event) {
             messageDiv.innerHTML = `
                 <div class="message-content">
                     <div class="image-message">
-                        <img src="${e.target.result}" alt="Original" class="uploaded-image">
+                        <img src="${e.target.result}" alt="Uploaded" class="uploaded-image">
                         <div class="image-info">
                             <span class="file-icon">📷</span>
                             <span class="file-name">${file.name}</span>
@@ -699,102 +699,13 @@ async function handleImageUpload(event) {
             return;
         }
 
-        console.log("🔑 Token found, sending to backend...");
-
-        // ✅ FIRST TEST WITH SIMPLE ROUTE
-        const formData = new FormData();
-        formData.append('image', file);
-
+        // Send to backend for AI response
         showTypingIndicator();
         
-        // Try test route first
-        console.log("🧪 Trying test route...");
-        const testResponse = await fetch('https://python22.pythonanywhere.com/api/test-image', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            },
-            body: formData
-        });
-
-        const testResult = await testResponse.json();
-        console.log("🧪 Test result:", testResult);
-
-        if (testResult.success) {
-            removeTypingIndicator();
-            showMessage("✅ Backend is working! Now trying enhancement...", "ai");
-            
-            // Now try brightening
-            showTypingIndicator();
-            console.log("🎨 Trying brightening...");
-            
-            const brightResponse = await fetch('https://python22.pythonanywhere.com/api/brighten-image', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                },
-                body: formData
-            });
-
-            const brightResult = await brightResponse.json();
-            console.log("🎨 Brightening result:", brightResult);
-            removeTypingIndicator();
-
-            if (brightResult.success) {
-                showMessage(brightResult.message, "ai");
-                
-                // Show comparison
-                const comparisonDiv = document.createElement('div');
-                comparisonDiv.className = 'message ai-message';
-                comparisonDiv.innerHTML = `
-                    <div class="message-content">
-                        <div class="comparison-container">
-                            <div class="image-comparison">
-                                <div class="image-half">
-                                    <strong>Original</strong>
-                                    <img src="${brightResult.original_image}" alt="Original" class="uploaded-image">
-                                </div>
-                                <div class="image-half">
-                                    <strong>Brightened</strong>
-                                    <img src="${brightResult.enhanced_image}" alt="Enhanced" class="uploaded-image">
-                                </div>
-                            </div>
-                            <div class="edit-changes">
-                                <strong>✨ Improvements:</strong>
-                                <ul>
-                                    ${brightResult.improvements.map(imp => `<li>${imp}</li>`).join('')}
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                document.getElementById('messagesContainer').appendChild(comparisonDiv);
-                scrollAfterMessage();
-            } else {
-                showMessage("❌ Brightening failed: " + brightResult.error, "ai");
-            }
-            
-        } else {
-            removeTypingIndicator();
-            showMessage("❌ Backend test failed: " + testResult.error, "ai");
-        }
-        
-    } catch (error) {
-        removeTypingIndicator();
-        console.error("🔥 Frontend error:", error);
-        showMessage("❌ Network error: " + error.message, "ai");
-    } finally {
-        uploadBtn.innerHTML = '<i class="fas fa-image"></i>';
-        document.getElementById('imageInput').value = '';
-    }
-}
-// Fallback function if enhancement fails
-async function analyzeImageOnly(file) {
-    try {
-        const token = localStorage.getItem('token');
         const formData = new FormData();
         formData.append('image', file);
 
+        console.log("🔄 Sending to backend...");
         const response = await fetch('https://python22.pythonanywhere.com/api/process-image', {
             method: 'POST',
             headers: {
@@ -804,80 +715,62 @@ async function analyzeImageOnly(file) {
         });
 
         const result = await response.json();
+        console.log("🎯 Backend response:", result);
+        removeTypingIndicator();
+
         if (result.success) {
-            showMessage(result.analysis, "ai");
+            // AI response me bhi choti image show karein
+            const aiMessageDiv = document.createElement('div');
+            aiMessageDiv.className = 'message ai-message';
+            aiMessageDiv.innerHTML = `
+                <div class="message-content">
+                    <div class="message-text">${result.message || "I've processed your image!"}</div>
+                    <div class="image-message">
+                        <img src="${result.processed_image || URL.createObjectURL(file)}" alt="Processed" class="uploaded-image">
+                        <div class="image-info">
+                            <span class="file-icon">🤖</span>
+                            <span>AI Processed Image</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            messagesContainer.appendChild(aiMessageDiv);
+            scrollAfterMessage();
+        } else {
+            showMessage("❌ Processing failed: " + (result.error || "Unknown error"), "ai");
         }
+        
     } catch (error) {
-        showMessage("❌ Image processing failed", "ai");
+        removeTypingIndicator();
+        console.error("🔥 Error:", error);
+        showMessage("❌ Network error: " + error.message, "ai");
+    } finally {
+        uploadBtn.innerHTML = '<i class="fas fa-image"></i>';
+        document.getElementById('imageInput').value = '';
     }
 }
-// ✅ FIXED: Send Message Function - Text Only
-async function sendMessage() {
-    const message = userInput.value.trim();
 
-    if (!message) return;
-
-    if (welcomeMessage) {
-        welcomeMessage.style.display = "none";
-    }
-
-    addMessageToChat("user", message); // ✅ Text message only
-    userInput.value = "";
-    userInput.style.height = "auto";
-
-    if (isAIActive) {
-        showTypingIndicator();
-
-        try {
-            const token = localStorage.getItem('token');
-            
-            const headers = {
-                "Content-Type": "application/json",
-            };
-            
-            if (token) {
-                headers['Authorization'] = `Bearer ${token}`;
-            }
-
-            const response = await fetch(
-                "https://python22.pythonanywhere.com/api/chat",
-                {
-                    method: "POST",
-                    headers: headers,
-                    body: JSON.stringify({
-                        message: message,
-                        conversation_id: currentConversationId || "default",
-                        language: currentLanguage,
-                    }),
-                    mode: "cors",
-                    credentials: "omit",
-                }
-            );
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.json();
-            removeTypingIndicator();
-
-            if (data && data.success !== false && data.response) {
-                addMessageToChat("ai", data.response);
-            } else {
-                const fallbackResponse = generateAIResponse(message);
-                addMessageToChat("ai", fallbackResponse);
-            }
-
-            saveConversation();
-        } catch (error) {
-            removeTypingIndicator();
-            const fallbackResponse = generateAIResponse(message);
-            addMessageToChat("ai", fallbackResponse);
-            saveConversation();
-        }
-    } else {
-        saveConversation();
-    }
+// ✅ Helper function for AI image response
+function showAIImageResponse(imageUrl, message = "Here's the processed image:") {
+    const messagesContainer = document.getElementById('messagesContainer');
+    
+    const aiMessageDiv = document.createElement('div');
+    aiMessageDiv.className = 'message ai-message';
+    aiMessageDiv.innerHTML = `
+        <div class="message-content">
+            <div class="message-text">${message}</div>
+            <div class="image-message">
+                <img src="${imageUrl}" alt="AI Response" class="uploaded-image">
+                <div class="image-info">
+                    <span class="file-icon">🤖</span>
+                    <span>AI Response</span>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    messagesContainer.appendChild(aiMessageDiv);
+    scrollAfterMessage();
 }
 
 // ✅ Helper Function: Message Display
