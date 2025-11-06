@@ -641,11 +641,39 @@ document.addEventListener("DOMContentLoaded", function () {
     updateLanguage();
   }
 });
+// ✅ COMPRESS ALL IMAGES (USER + AI)
+function compressImage(base64Data, maxWidth = 300) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = function() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Calculate new dimensions
+            let width = img.width;
+            let height = img.height;
+            
+            if (width > maxWidth) {
+                height = (height * maxWidth) / width;
+                width = maxWidth;
+            }
+            
+            canvas.width = width;
+            canvas.height = height;
+            
+            // Draw and compress
+            ctx.drawImage(img, 0, 0, width, height);
+            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+            resolve(compressedBase64);
+        };
+        img.src = base64Data;
+    });
+}
+
+// ✅ UPDATE handleImageUpload FUNCTION - COMPRESS ALL IMAGES
 async function handleImageUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
-
-    console.log("📸 File selected:", file.name, file.size, file.type);
 
     const uploadBtn = document.getElementById('uploadBtn');
     const originalHTML = uploadBtn.innerHTML;
@@ -654,26 +682,31 @@ async function handleImageUpload(event) {
     try {
         // Show original image
         const reader = new FileReader();
-        reader.onload = function(e) {
+        reader.onload = async function(e) {
             const messagesContainer = document.getElementById('messagesContainer');
             const welcomeMessage = document.getElementById('welcomeMessage');
             
             if(welcomeMessage) welcomeMessage.style.display = 'none';
             
+            // ✅ COMPRESS USER IMAGE BEFORE SAVING
+            const compressedImage = await compressImage(e.target.result);
+            
             const messageDiv = document.createElement('div');
             messageDiv.className = 'message user-message';
             
-            // ✅ USER IMAGE - RESPONSIVE
             messageDiv.innerHTML = `
                 <div class="message-content">
                     <div class="image-message">
-                        <img src="${e.target.result}" alt="Original" 
+                        <img src="${compressedImage}" alt="Original" 
                              style="max-width: 100%; height: auto; border-radius: 10px; display: block;">
                     </div>
                 </div>
             `;
             messagesContainer.appendChild(messageDiv);
             scrollAfterMessage();
+            
+            // ✅ SAVE COMPRESSED USER IMAGE
+            addMessageToChat("user", "", compressedImage);
         };
         reader.readAsDataURL(file);
 
@@ -700,6 +733,10 @@ async function handleImageUpload(event) {
         removeTypingIndicator();
 
         if (brightResult.success) {
+            // ✅ COMPRESS AI IMAGES BEFORE SAVING
+            const compressedOriginal = await compressImage(brightResult.original_image);
+            const compressedEnhanced = await compressImage(brightResult.enhanced_image);
+            
             // ✅ AI IMAGES - MOBILE RESPONSIVE
             const comparisonDiv = document.createElement('div');
             comparisonDiv.className = 'message ai-message';
@@ -707,11 +744,11 @@ async function handleImageUpload(event) {
                 <div class="message-content">
                     <div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; width: 100%; max-width: 100%;">
                         <div style="flex: 1 1 45%; min-width: 150px; text-align: center;">
-                            <img src="${brightResult.original_image}" alt="Original" 
+                            <img src="${compressedOriginal}" alt="Original" 
                                  style="max-width: 100%; height: auto; border-radius: 10px; object-fit: contain;">
                         </div>
                         <div style="flex: 1 1 45%; min-width: 150px; text-align: center;">
-                            <img src="${brightResult.enhanced_image}" alt="Enhanced" 
+                            <img src="${compressedEnhanced}" alt="Enhanced" 
                                  style="max-width: 100%; height: auto; border-radius: 10px; object-fit: contain;">
                         </div>
                     </div>
@@ -719,6 +756,10 @@ async function handleImageUpload(event) {
             `;
             document.getElementById('messagesContainer').appendChild(comparisonDiv);
             scrollAfterMessage();
+            
+            // ✅ SAVE COMPRESSED AI IMAGES
+            addMessageToChat("ai", "Image processed successfully", compressedOriginal);
+            // You can save both images if needed, but one is enough to show the comparison
         }
         
     } catch (error) {
@@ -729,6 +770,132 @@ async function handleImageUpload(event) {
         document.getElementById('imageInput').value = '';
     }
 }
+
+// ✅ UPDATED addMessageToChat FUNCTION - SAVE ALL IMAGES
+function addMessageToChat(sender, message, image = null) {
+    const messageDiv = document.createElement("div");
+    messageDiv.className = `message ${sender}-message`;
+
+    const now = new Date();
+    const timeString = now.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+    });
+
+    let content = `
+        <div class="message-header">
+            <img src="${
+                sender === "user"
+                ? profilePicture.src
+                : "https://cdn-icons-png.flaticon.com/512/4712/4712035.png"
+            }" 
+                alt="${sender === "user" ? "User" : "AI"}" class="message-avatar">
+            <div class="message-sender">${
+                sender === "user"
+                ? translations[currentLanguage].you
+                : translations[currentLanguage].aiAssistant
+            }</div>
+        </div>
+    `;
+
+    if (image) {
+        content += `
+            <div class="message-image">
+                <img src="${image}" alt="Uploaded image" style="max-width: 100%; height: auto; border-radius: 10px;">
+            </div>
+        `;
+    }
+    
+    if (message) {
+        content += `<div class="message-text">${escapeHtml(message)}</div>`;
+    }
+
+    content += `<div class="message-time">${timeString}</div>`;
+
+    messageDiv.innerHTML = content;
+    messagesContainer.appendChild(messageDiv);
+    scrollAfterMessage();
+
+    // Save to conversation history
+    if (!currentConversationId) {
+        currentConversationId = Date.now().toString();
+    }
+
+    if (!conversations.find((c) => c.id === currentConversationId)) {
+        conversations.push({
+            id: currentConversationId,
+            messages: [],
+        });
+    }
+
+    const currentConv = conversations.find((c) => c.id === currentConversationId);
+    
+    // ✅ SAVE ALL IMAGES (USER + AI) - COMPRESSED
+    currentConv.messages.push({
+        sender: sender,
+        message: message,
+        image: image, // Save compressed image
+        timestamp: now.getTime(),
+    });
+    
+    saveConversation();
+}
+
+// ✅ UPDATED saveConversation WITH STORAGE MANAGEMENT
+function saveConversation() {
+    try {
+        // Save all conversations with compressed images
+        localStorage.setItem("aiConversations", JSON.stringify(conversations));
+    } catch (error) {
+        console.error("Error saving conversation:", error);
+        // If storage is full, clear old conversations
+        if (error.name === 'QuotaExceededError') {
+            console.log('Storage full! Keeping only recent 3 conversations.');
+            // Keep only last 3 conversations to free up space
+            conversations = conversations.slice(-3);
+            localStorage.setItem("aiConversations", JSON.stringify(conversations));
+        }
+    }
+}
+
+// ✅ UPDATED loadConversations FUNCTION
+function loadConversations() {
+    const saved = localStorage.getItem("aiConversations");
+    if (saved) {
+        try {
+            conversations = JSON.parse(saved);
+            
+            if (conversations.length > 0) {
+                const recentConv = conversations[conversations.length - 1];
+                currentConversationId = recentConv.id;
+
+                if (welcomeMessage) welcomeMessage.style.display = 'none';
+                
+                // Load all messages with compressed images
+                recentConv.messages.forEach((msg) => {
+                    addMessageToChat(msg.sender, msg.message, msg.image);
+                });
+            }
+        } catch (error) {
+            console.error("Error loading conversations:", error);
+            conversations = [];
+        }
+    }
+}
+
+// ✅ STORAGE CLEANUP FUNCTION (OPTIONAL)
+function cleanupOldConversations() {
+    // Keep only last 5 conversations to prevent storage issues
+    if (conversations.length > 5) {
+        conversations = conversations.slice(-5);
+        saveConversation();
+    }
+}
+
+// ✅ CALL CLEANUP ON PAGE LOAD
+document.addEventListener('DOMContentLoaded', function() {
+    cleanupOldConversations();
+});
 // Fallback function if enhancement fails
 async function analyzeImageOnly(file) {
     try {
@@ -1332,102 +1499,5 @@ window.addEventListener("load", function () {
             .catch((err) => console.log("⚠️ Backend Check:", err));
     }, 1000);
 });
-// ✅ IMAGE STORAGE HELPER FUNCTIONS
-function base64ToBlob(base64Data) {
-    const byteCharacters = atob(base64Data.split(',')[1]);
-    const byteArrays = [];
-    
-    for (let offset = 0; offset < byteCharacters.length; offset += 512) {
-        const slice = byteCharacters.slice(offset, offset + 512);
-        const byteNumbers = new Array(slice.length);
-        
-        for (let i = 0; i < slice.length; i++) {
-            byteNumbers[i] = slice.charCodeAt(i);
-        }
-        
-        const byteArray = new Uint8Array(byteNumbers);
-        byteArrays.push(byteArray);
-    }
-    
-    return new Blob(byteArrays, {type: 'image/jpeg'});
-}
 
-function blobToBase64(blob) {
-    return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result);
-        reader.readAsDataURL(blob);
-    });
-}
-
-// ✅ CONVERSATION SAVE/LOAD FUNCTIONS KO UPDATE KARO
-async function saveConversation() {
-    try {
-        // Convert base64 images to blob URLs for storage
-        const conversationsToSave = await Promise.all(conversations.map(async (conv) => {
-            const messagesWithBlobs = await Promise.all(conv.messages.map(async (msg) => {
-                if (msg.image && msg.image.startsWith('data:image')) {
-                    // Convert base64 to blob and store
-                    const blob = base64ToBlob(msg.image);
-                    const blobUrl = URL.createObjectURL(blob);
-                    return {
-                        ...msg,
-                        image: blobUrl,
-                        imageData: msg.image // Store original base64 for immediate use
-                    };
-                }
-                return msg;
-            }));
-            
-            return {
-                ...conv,
-                messages: messagesWithBlobs
-            };
-        }));
-        
-        localStorage.setItem("aiConversations", JSON.stringify(conversationsToSave));
-    } catch (error) {
-        console.error("Error saving conversation:", error);
-        // Fallback: save without images
-        localStorage.setItem("aiConversations", JSON.stringify(conversations));
-    }
-}
-
-function loadConversations() {
-    const saved = localStorage.getItem("aiConversations");
-    if (saved) {
-        try {
-            const parsed = JSON.parse(saved);
-            
-            // Convert blob URLs back to base64 for display
-            conversations = parsed.map(conv => ({
-                ...conv,
-                messages: conv.messages.map(msg => {
-                    if (msg.imageData) {
-                        return {
-                            ...msg,
-                            image: msg.imageData // Use stored base64 data
-                        };
-                    }
-                    return msg;
-                })
-            }));
-            
-            if (conversations.length > 0) {
-                const recentConv = conversations[conversations.length - 1];
-                currentConversationId = recentConv.id;
-
-                if (welcomeMessage) welcomeMessage.style.display = 'none';
-                
-                // Reload messages with images
-                recentConv.messages.forEach((msg) => {
-                    addMessageToChat(msg.sender, msg.message, msg.image);
-                });
-            }
-        } catch (error) {
-            console.error("Error loading conversations:", error);
-            conversations = [];
-        }
-    }
-}
 console.log("🎯 AI Problem Solve JavaScript Loaded Successfully!");
