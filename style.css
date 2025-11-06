@@ -2161,3 +2161,26 @@
 .dark-mode .message-time {
     color: #aaa;
 }
+
+      /* Image Size Control */
+.uploaded-image {
+    max-width: 300px !important;
+    max-height: 300px !important;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.message-image img {
+    max-width: 300px !important;
+    max-height: 300px !important;
+    border-radius: 10px;
+}
+
+/* Dono sides (user aur AI) ke liye same size */
+.user-message .uploaded-image,
+.ai-message .uploaded-image,
+.user-message .message-image img,
+.ai-message .message-image img {
+    max-width: 300px !important;
+    max-height: 300px !important;
+}
