@@ -2183,7 +2183,7 @@ img[alt*="Image"] {
 }
 
 /* /* Message container ko bhi control karo */
-.message-image {
+/* .message-image {
     max-width: 250px !important;
 }
 
@@ -2217,7 +2217,7 @@ img[alt*="Image"] {
     border-radius: 10px;
     flex: 1 1 45%;
     min-width: 150px;
-} 
+}  */
 
 /* Mobile screens ke liye */
 @media (max-width: 768px) {
