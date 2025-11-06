@@ -771,75 +771,75 @@ async function handleImageUpload(event) {
     }
 }
 
-// ✅ UPDATED addMessageToChat FUNCTION - SAVE ALL IMAGES
-function addMessageToChat(sender, message, image = null) {
-    const messageDiv = document.createElement("div");
-    messageDiv.className = `message ${sender}-message`;
+// // ✅ UPDATED addMessageToChat FUNCTION - SAVE ALL IMAGES
+// function addMessageToChat(sender, message, image = null) {
+//     const messageDiv = document.createElement("div");
+//     messageDiv.className = `message ${sender}-message`;
 
-    const now = new Date();
-    const timeString = now.toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-    });
+//     const now = new Date();
+//     const timeString = now.toLocaleTimeString([], {
+//         hour: "2-digit",
+//         minute: "2-digit",
+//     });
 
-    let content = `
-        <div class="message-header">
-            <img src="${
-                sender === "user"
-                ? profilePicture.src
-                : "https://cdn-icons-png.flaticon.com/512/4712/4712035.png"
-            }" 
-                alt="${sender === "user" ? "User" : "AI"}" class="message-avatar">
-            <div class="message-sender">${
-                sender === "user"
-                ? translations[currentLanguage].you
-                : translations[currentLanguage].aiAssistant
-            }</div>
-        </div>
-    `;
+//     let content = `
+//         <div class="message-header">
+//             <img src="${
+//                 sender === "user"
+//                 ? profilePicture.src
+//                 : "https://cdn-icons-png.flaticon.com/512/4712/4712035.png"
+//             }" 
+//                 alt="${sender === "user" ? "User" : "AI"}" class="message-avatar">
+//             <div class="message-sender">${
+//                 sender === "user"
+//                 ? translations[currentLanguage].you
+//                 : translations[currentLanguage].aiAssistant
+//             }</div>
+//         </div>
+//     `;
 
-    if (image) {
-        content += `
-            <div class="message-image">
-                <img src="${image}" alt="Uploaded image" style="max-width: 100%; height: auto; border-radius: 10px;">
-            </div>
-        `;
-    }
+//     if (image) {
+//         content += `
+//             <div class="message-image">
+//                 <img src="${image}" alt="Uploaded image" style="max-width: 100%; height: auto; border-radius: 10px;">
+//             </div>
+//         `;
+//     }
     
-    if (message) {
-        content += `<div class="message-text">${escapeHtml(message)}</div>`;
-    }
+//     if (message) {
+//         content += `<div class="message-text">${escapeHtml(message)}</div>`;
+//     }
 
-    content += `<div class="message-time">${timeString}</div>`;
+//     content += `<div class="message-time">${timeString}</div>`;
 
-    messageDiv.innerHTML = content;
-    messagesContainer.appendChild(messageDiv);
-    scrollAfterMessage();
+//     messageDiv.innerHTML = content;
+//     messagesContainer.appendChild(messageDiv);
+//     scrollAfterMessage();
 
-    // Save to conversation history
-    if (!currentConversationId) {
-        currentConversationId = Date.now().toString();
-    }
+//     // Save to conversation history
+//     if (!currentConversationId) {
+//         currentConversationId = Date.now().toString();
+//     }
 
-    if (!conversations.find((c) => c.id === currentConversationId)) {
-        conversations.push({
-            id: currentConversationId,
-            messages: [],
-        });
-    }
+//     if (!conversations.find((c) => c.id === currentConversationId)) {
+//         conversations.push({
+//             id: currentConversationId,
+//             messages: [],
+//         });
+//     }
 
-    const currentConv = conversations.find((c) => c.id === currentConversationId);
+//     const currentConv = conversations.find((c) => c.id === currentConversationId);
     
-    // ✅ SAVE ALL IMAGES (USER + AI) - COMPRESSED
-    currentConv.messages.push({
-        sender: sender,
-        message: message,
-        image: image, // Save compressed image
-        timestamp: now.getTime(),
-    });
+//     // ✅ SAVE ALL IMAGES (USER + AI) - COMPRESSED
+//     currentConv.messages.push({
+//         sender: sender,
+//         message: message,
+//         image: image, // Save compressed image
+//         timestamp: now.getTime(),
+//     });
     
-    saveConversation();
-}
+//     saveConversation();
+// }
 
 // ✅ UPDATED saveConversation WITH STORAGE MANAGEMENT
 function saveConversation() {
