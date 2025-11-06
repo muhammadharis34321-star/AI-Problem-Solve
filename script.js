@@ -1332,5 +1332,102 @@ window.addEventListener("load", function () {
             .catch((err) => console.log("⚠️ Backend Check:", err));
     }, 1000);
 });
+// ✅ IMAGE STORAGE HELPER FUNCTIONS
+function base64ToBlob(base64Data) {
+    const byteCharacters = atob(base64Data.split(',')[1]);
+    const byteArrays = [];
+    
+    for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+        const slice = byteCharacters.slice(offset, offset + 512);
+        const byteNumbers = new Array(slice.length);
+        
+        for (let i = 0; i < slice.length; i++) {
+            byteNumbers[i] = slice.charCodeAt(i);
+        }
+        
+        const byteArray = new Uint8Array(byteNumbers);
+        byteArrays.push(byteArray);
+    }
+    
+    return new Blob(byteArrays, {type: 'image/jpeg'});
+}
 
+function blobToBase64(blob) {
+    return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.readAsDataURL(blob);
+    });
+}
+
+// ✅ CONVERSATION SAVE/LOAD FUNCTIONS KO UPDATE KARO
+async function saveConversation() {
+    try {
+        // Convert base64 images to blob URLs for storage
+        const conversationsToSave = await Promise.all(conversations.map(async (conv) => {
+            const messagesWithBlobs = await Promise.all(conv.messages.map(async (msg) => {
+                if (msg.image && msg.image.startsWith('data:image')) {
+                    // Convert base64 to blob and store
+                    const blob = base64ToBlob(msg.image);
+                    const blobUrl = URL.createObjectURL(blob);
+                    return {
+                        ...msg,
+                        image: blobUrl,
+                        imageData: msg.image // Store original base64 for immediate use
+                    };
+                }
+                return msg;
+            }));
+            
+            return {
+                ...conv,
+                messages: messagesWithBlobs
+            };
+        }));
+        
+        localStorage.setItem("aiConversations", JSON.stringify(conversationsToSave));
+    } catch (error) {
+        console.error("Error saving conversation:", error);
+        // Fallback: save without images
+        localStorage.setItem("aiConversations", JSON.stringify(conversations));
+    }
+}
+
+function loadConversations() {
+    const saved = localStorage.getItem("aiConversations");
+    if (saved) {
+        try {
+            const parsed = JSON.parse(saved);
+            
+            // Convert blob URLs back to base64 for display
+            conversations = parsed.map(conv => ({
+                ...conv,
+                messages: conv.messages.map(msg => {
+                    if (msg.imageData) {
+                        return {
+                            ...msg,
+                            image: msg.imageData // Use stored base64 data
+                        };
+                    }
+                    return msg;
+                })
+            }));
+            
+            if (conversations.length > 0) {
+                const recentConv = conversations[conversations.length - 1];
+                currentConversationId = recentConv.id;
+
+                if (welcomeMessage) welcomeMessage.style.display = 'none';
+                
+                // Reload messages with images
+                recentConv.messages.forEach((msg) => {
+                    addMessageToChat(msg.sender, msg.message, msg.image);
+                });
+            }
+        } catch (error) {
+            console.error("Error loading conversations:", error);
+            conversations = [];
+        }
+    }
+}
 console.log("🎯 AI Problem Solve JavaScript Loaded Successfully!");
