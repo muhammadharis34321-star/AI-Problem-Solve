@@ -2182,6 +2182,77 @@ img[alt*="Image"] {
     object-fit: contain;
 }
 
+
+      /* 🔥 MOBILE RESPONSIVE AI IMAGES FIX */
+.message.ai-message img,
+.message.ai-message .message-content img,
+.ai-message .image-comparison img,
+.ai-message .image-half img,
+.ai-message .responsive-image {
+    max-width: 100% !important;
+    height: auto !important;
+    width: auto !important;
+    border-radius: 10px;
+    object-fit: contain;
+}
+
+/* AI message ke andar ki images ko responsive banayo */
+.ai-message .image-comparison {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    width: 100%;
+    justify-content: center;
+}
+
+.ai-message .image-half {
+    flex: 1 1 45%;
+    min-width: 150px;
+    text-align: center;
+}
+
+/* Mobile screens ke liye */
+@media (max-width: 768px) {
+    .ai-message .image-comparison {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .ai-message .image-half {
+        flex: 1 1 100%;
+        max-width: 90%;
+        margin: 0 auto;
+    }
+    
+    .ai-message img,
+    .ai-message .message-content img {
+        max-width: 100% !important;
+        height: auto !important;
+    }
+    
+    /* AI message container ko bhi adjust karo */
+    .ai-message {
+        max-width: 95% !important;
+        margin-left: 10px !important;
+        margin-right: 10px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .ai-message .image-comparison {
+        gap: 8px;
+    }
+    
+    .ai-message .image-half {
+        max-width: 95%;
+    }
+    
+    .ai-message {
+        max-width: 98% !important;
+        padding: 12px 15px !important;
+    }
+}
+
 /* /* Message container ko bhi control karo */
 /* .message-image {
     max-width: 250px !important;
