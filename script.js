@@ -1022,64 +1022,64 @@ function showMessage(message, sender) {
     scrollAfterMessage();
 }
 
-function addMessageToChat(sender, message, image = null) {
-    const messageDiv = document.createElement("div");
-    messageDiv.className = `message ${sender}-message`;
+// function addMessageToChat(sender, message, image = null) {
+//     const messageDiv = document.createElement("div");
+//     messageDiv.className = `message ${sender}-message`;
 
-    const now = new Date();
-    const timeString = now.toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-    });
+//     const now = new Date();
+//     const timeString = now.toLocaleTimeString([], {
+//         hour: "2-digit",
+//         minute: "2-digit",
+//     });
 
-    let content = `
-        <div class="message-header">
-            <img src="${
-                sender === "user"
-                ? profilePicture.src
-                : "https://cdn-icons-png.flaticon.com/512/4712/4712035.png"
-            }" 
-                alt="${sender === "user" ? "User" : "AI"}" class="message-avatar">
-            <div class="message-sender">${
-                sender === "user"
-                ? translations[currentLanguage].you
-                : translations[currentLanguage].aiAssistant
-            }</div>
-        </div>
-    `;
+//     let content = `
+//         <div class="message-header">
+//             <img src="${
+//                 sender === "user"
+//                 ? profilePicture.src
+//                 : "https://cdn-icons-png.flaticon.com/512/4712/4712035.png"
+//             }" 
+//                 alt="${sender === "user" ? "User" : "AI"}" class="message-avatar">
+//             <div class="message-sender">${
+//                 sender === "user"
+//                 ? translations[currentLanguage].you
+//                 : translations[currentLanguage].aiAssistant
+//             }</div>
+//         </div>
+//     `;
 
-    if (image) {
-        content += `<div class="message-image"><img src="${image}" alt="Uploaded image"></div>`;
-    }
-    if (message) {
-        content += `<div class="message-text">${escapeHtml(message)}</div>`;
-    }
+//     if (image) {
+//         content += `<div class="message-image"><img src="${image}" alt="Uploaded image"></div>`;
+//     }
+//     if (message) {
+//         content += `<div class="message-text">${escapeHtml(message)}</div>`;
+//     }
 
-    content += `<div class="message-time">${timeString}</div>`;
+//     content += `<div class="message-time">${timeString}</div>`;
 
-    messageDiv.innerHTML = content;
-    messagesContainer.appendChild(messageDiv);
-    chatContainer.scrollTop = chatContainer.scrollHeight;
+//     messageDiv.innerHTML = content;
+//     messagesContainer.appendChild(messageDiv);
+//     chatContainer.scrollTop = chatContainer.scrollHeight;
 
-    if (!currentConversationId) {
-        currentConversationId = Date.now().toString();
-    }
+//     if (!currentConversationId) {
+//         currentConversationId = Date.now().toString();
+//     }
 
-    if (!conversations.find((c) => c.id === currentConversationId)) {
-        conversations.push({
-            id: currentConversationId,
-            messages: [],
-        });
-    }
+//     if (!conversations.find((c) => c.id === currentConversationId)) {
+//         conversations.push({
+//             id: currentConversationId,
+//             messages: [],
+//         });
+//     }
 
-    const currentConv = conversations.find((c) => c.id === currentConversationId);
-    currentConv.messages.push({
-        sender: sender,
-        message: message,
-        image: image,
-        timestamp: now.getTime(),
-    });
-}
+//     const currentConv = conversations.find((c) => c.id === currentConversationId);
+//     currentConv.messages.push({
+//         sender: sender,
+//         message: message,
+//         image: image,
+//         timestamp: now.getTime(),
+//     });
+// }
 
 function showTypingIndicator() {
     const typingDiv = document.createElement("div");
