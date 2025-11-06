@@ -1500,4 +1500,15 @@ window.addEventListener("load", function () {
     }, 1000);
 });
 
+// Preload important resources
+window.addEventListener('load', function() {
+    // Preload AI avatar
+    const preloadImage = new Image();
+    preloadImage.src = "https://cdn-icons-png.flaticon.com/512/4712/4712035.png";
+    
+    // Preload user placeholder
+    const preloadUser = new Image(); 
+    preloadUser.src = "https://via.placeholder.com/80";
+});
+
 console.log("🎯 AI Problem Solve JavaScript Loaded Successfully!");
