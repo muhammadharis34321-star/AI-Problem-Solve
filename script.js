@@ -663,12 +663,12 @@ async function handleImageUpload(event) {
             const messageDiv = document.createElement('div');
             messageDiv.className = 'message user-message';
             
-            // ✅ SIRF IMAGE - KOI TEXT NAHI
+            // ✅ RESPONSIVE IMAGE STYLING
             messageDiv.innerHTML = `
                 <div class="message-content">
                     <div class="image-message">
                         <img src="${e.target.result}" alt="Original" 
-                             style="max-width: 300px; max-height: 300px; width: auto; height: auto; border-radius: 10px; display: block;">
+                             style="max-width: 100%; height: auto; border-radius: 10px; display: block;">
                     </div>
                 </div>
             `;
@@ -700,19 +700,17 @@ async function handleImageUpload(event) {
         removeTypingIndicator();
 
         if (brightResult.success) {
-            // ✅ SIRF IMAGES - KOI TEXT NAHI
+            // ✅ MOBILE RESPONSIVE COMPARISON
             const comparisonDiv = document.createElement('div');
             comparisonDiv.className = 'message ai-message';
             comparisonDiv.innerHTML = `
                 <div class="message-content">
-                    <div style="display: flex; gap: 10px; justify-content: center;">
-                        <div>
+                    <div class="image-comparison-responsive">
+                        <div class="image-pair">
                             <img src="${brightResult.original_image}" alt="Original" 
-                                 style="max-width: 300px; max-height: 300px; width: auto; height: auto; border-radius: 10px;">
-                        </div>
-                        <div>
+                                 class="responsive-image">
                             <img src="${brightResult.enhanced_image}" alt="Enhanced" 
-                                 style="max-width: 300px; max-height: 300px; width: auto; height: auto; border-radius: 10px;">
+                                 class="responsive-image">
                         </div>
                     </div>
                 </div>
