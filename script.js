@@ -188,7 +188,6 @@ const translations = {
       ],
     },
   },
-
   zh: {
     welcome: "欢迎，用户",
     title1: "AI 问题解决",
@@ -357,8 +356,7 @@ const translations = {
     aiResponses: {
       hello: "नमस्ते! आज मैं आपकी समस्या समाधान में कैसे सहायता कर सकता हूं?",
       help: "मैं मदद के लिए यहां हूं! मैं विभिन्न समस्याओं में सहायता कर सकता हूं जिनमें शामिल हैं:\n• तकनीकी समस्याएं\n• गणित की समस्याएं\n• प्रोग्रामिंग प्रश्न\n• छवि प्रसंस्करण\n• सामान्य समस्या समाधान\n\nमैं आपकी किस विशिष्ट समस्या में मदद कर सकता हूं?",
-      thanks:
-        "आपका स्वागत है! क्या कोई और चीज है जिसमें मैं आपकी मदद कर सकता हूं?",
+      thanks: "आपका स्वागत है! क्या कोई और चीज है जिसमें मैं आपकी मदद कर सकता हूं?",
       image:
         "मैं देख रहा हूं कि आपने एक छवि साझा की है। हालांकि मैं इस डेमो में सीधे छवियों को प्रोसेस नहीं कर सकता, मैं आपकी इनमें मदद कर सकता हूं:\n• छवि प्रारूप प्रश्न\n• छवि प्रसंस्करण अवधारणाएं\n• छवि समस्याओं का निवारण\n• छवि अनुकूलन के लिए सर्वोत्तम प्रथाएं\n\nमैं आपकी छवियों के संबंध में कैसे मदद कर सकता हूं?",
       problem:
@@ -421,32 +419,27 @@ const translations = {
   },
 };
 
-// ✅ AUTOMATIC FIX - Friends ke liye automatically work karega
-console.log("🚀 AI Problem Solve - Auto Fix Enabled");
+// ✅ CORRECT BACKEND URL - PythonAnywhere
+const BACKEND_BASE_URL = "https://python22.pythonanywhere.com";
 
-// ✅ BACKEND URL CONSTANT - EASY TO CHANGE
-const BACKEND_BASE_URL = "https://ai-problem-solve-backend.onrender.com";
-
-// Automatic URL fix
+// ✅ URL FIX FUNCTION
 const originalFetch = window.fetch;
 window.fetch = function (url, options = {}) {
   if (typeof url === "string") {
-    // Fix wrong backend URLs
-    if (url.includes("abc-123.ngrok.io")) {
-      console.log("🔄 Auto-fixing backend URL...");
-      url = url.replace("abc-123.ngrok.io", "python22.pythonanywhere.com");
+    // ✅ SABHI GALAT URLs KO PYTHONANYWHERE URL SE REPLACE KARO
+    if (url.includes("ai-problem-solve-backend.onrender.com") || 
+        url.includes("abc-123.ngrok.io") ||
+        url.includes("render.com")) {
+      console.log("🔄 Auto-replacing wrong backend URL with PythonAnywhere...");
+      url = url.replace(/.*(ai-problem-solve-backend|abc-123|render).*/, BACKEND_BASE_URL);
     }
 
-    // ✅ FIXED: Auto-replace PythonAnywhere URLs with working backend
+    // PythonAnywhere ke liye CORS settings
     if (url.includes("python22.pythonanywhere.com")) {
-      console.log("🔄 Auto-replacing PythonAnywhere URL...");
-      url = url.replace("python22.pythonanywhere.com", "ai-problem-solve-backend.onrender.com");
-    }
-
-    // Add CORS for all backend requests
-    if (url.includes("ai-problem-solve-backend.onrender.com")) {
-      options.mode = "cors";
-      options.credentials = "omit";
+      if (!options.headers) options.headers = {};
+      options.headers['Content-Type'] = 'application/json';
+      options.mode = 'cors';
+      options.credentials = 'omit';
     }
   }
   return originalFetch(url, options);
@@ -515,14 +508,8 @@ darkModeToggle.addEventListener("change", toggleDarkMode);
 changeDpBtn.addEventListener("click", changeProfilePicture);
 removeDpBtn.addEventListener("click", removeProfilePicture);
 settingsBtn.addEventListener("click", openSettings);
-closeSettings.addEventListener(
-  "click",
-  () => (settingsModal.style.display = "none")
-);
-cancelSettings.addEventListener(
-  "click",
-  () => (settingsModal.style.display = "none")
-);
+closeSettings.addEventListener("click", () => (settingsModal.style.display = "none"));
+cancelSettings.addEventListener("click", () => (settingsModal.style.display = "none"));
 saveSettings.addEventListener("click", saveSettingsChanges);
 textColorBtn.addEventListener("click", () => {
   settingsModal.style.display = "flex";
@@ -539,6 +526,8 @@ tabButtons.forEach((button) => {
     switchTab(tabName);
   });
 });
+
+// Text animation
 const headingTexts = ["AI PROBLEM SOLVE", "MUHAMMAD HARIS"];
 const normalTexts = ["AI PROBLEM SOLVE", "MUHAMMAD HARIS"];
 let headingIndex = 0;
@@ -548,7 +537,6 @@ const headingEl = document.getElementById("heading");
 const normalEl = document.getElementById("normalText");
 const speed = 100;
 
-// Function to animate any text element
 function animate(element, texts, index, type) {
   let currentText = texts[index];
   let displayed = "";
@@ -567,7 +555,6 @@ function animate(element, texts, index, type) {
   }, speed);
 }
 
-// Function to erase text
 function erase(element, currentText, texts, index, type) {
   let i = currentText.length;
   const eraser = setInterval(() => {
@@ -577,7 +564,6 @@ function erase(element, currentText, texts, index, type) {
       clearInterval(eraser);
       index = (index + 1) % texts.length;
 
-      // 👇 Recursive loop (calls itself again safely)
       if (type === "heading") {
         headingIndex = index;
         animate(headingEl, headingTexts, headingIndex, "heading");
@@ -651,6 +637,32 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 });
 
+// ✅ BACKEND HEALTH CHECK
+async function checkBackendHealth() {
+  try {
+    console.log("🔧 Checking PythonAnywhere backend...");
+    const response = await fetch(`${BACKEND_BASE_URL}/api/health`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      mode: 'cors'
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      console.log('✅ PythonAnywhere Backend Status:', data.status);
+      return true;
+    } else {
+      console.log('⚠️ Backend responded with error:', response.status);
+      return false;
+    }
+  } catch (error) {
+    console.log('❌ PythonAnywhere Backend unreachable:', error.message);
+    return false;
+  }
+}
+
 // ✅ FIXED: Image Upload Function
 async function handleImageUpload(event) {
     const file = event.target.files[0];
@@ -663,7 +675,7 @@ async function handleImageUpload(event) {
     uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
     
     try {
-        // Show original image - WITH FORCED SMALL SIZE
+        // Show original image
         const reader = new FileReader();
         reader.onload = function(e) {
             const messagesContainer = document.getElementById('messagesContainer');
@@ -674,7 +686,6 @@ async function handleImageUpload(event) {
             const messageDiv = document.createElement('div');
             messageDiv.className = 'message user-message';
             
-            // ✅ YAHAN DIRECT STYLE ADD KARO
             messageDiv.innerHTML = `
                 <div class="message-content">
                     <div class="image-message">
@@ -696,13 +707,14 @@ async function handleImageUpload(event) {
         // Get token
         const token = localStorage.getItem('token');
         if (!token) {
-            showMessage("🔐 Please login first", "ai");
+            showMessage("🔐 Please login first to use image features", "ai");
+            uploadBtn.innerHTML = '<i class="fas fa-image"></i>';
             return;
         }
 
-        console.log("🔑 Token found, sending to backend...");
+        console.log("🔑 Token found, sending to PythonAnywhere backend...");
 
-        // ✅ FIXED URL
+        // ✅ PYTHONANYWHERE URL USE KARO
         const formData = new FormData();
         formData.append('image', file);
 
@@ -728,7 +740,7 @@ async function handleImageUpload(event) {
             showTypingIndicator();
             console.log("🎨 Trying brightening...");
             
-            // ✅ FIXED URL
+            // ✅ PYTHONANYWHERE URL USE KARO
             const brightResponse = await fetch(`${BACKEND_BASE_URL}/api/brighten-image`, {
                 method: 'POST',
                 headers: {
@@ -744,7 +756,7 @@ async function handleImageUpload(event) {
             if (brightResult.success) {
                 showMessage(brightResult.message, "ai");
                 
-                // Show comparison - WITH FORCED SMALL SIZE
+                // Show comparison
                 const comparisonDiv = document.createElement('div');
                 comparisonDiv.className = 'message ai-message';
                 comparisonDiv.innerHTML = `
@@ -774,12 +786,12 @@ async function handleImageUpload(event) {
                 document.getElementById('messagesContainer').appendChild(comparisonDiv);
                 scrollAfterMessage();
             } else {
-                showMessage("❌ Brightening failed: " + brightResult.error, "ai");
+                showMessage("❌ Brightening failed: " + (brightResult.error || "Unknown error"), "ai");
             }
             
         } else {
             removeTypingIndicator();
-            showMessage("❌ Backend test failed: " + testResult.error, "ai");
+            showMessage("❌ Backend test failed: " + (testResult.error || "Unknown error"), "ai");
         }
         
     } catch (error) {
@@ -792,31 +804,7 @@ async function handleImageUpload(event) {
     }
 }
 
-// Fallback function if enhancement fails
-async function analyzeImageOnly(file) {
-    try {
-        const token = localStorage.getItem('token');
-        const formData = new FormData();
-        formData.append('image', file);
-
-        const response = await fetch(`${BACKEND_BASE_URL}/api/process-image`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            },
-            body: formData
-        });
-
-        const result = await response.json();
-        if (result.success) {
-            showMessage(result.analysis, "ai");
-        }
-    } catch (error) {
-        showMessage("❌ Image processing failed", "ai");
-    }
-}
-
-// ✅ FIXED: Send Message Function - Text Only
+// ✅ FIXED: Send Message Function
 async function sendMessage() {
     const message = userInput.value.trim();
 
@@ -826,7 +814,7 @@ async function sendMessage() {
         welcomeMessage.style.display = "none";
     }
 
-    addMessageToChat("user", message); // ✅ Text message only
+    addMessageToChat("user", message);
     userInput.value = "";
     userInput.style.height = "auto";
 
@@ -844,7 +832,7 @@ async function sendMessage() {
                 headers['Authorization'] = `Bearer ${token}`;
             }
 
-            // ✅ FIXED URL
+            // ✅ PYTHONANYWHERE URL USE KARO
             const response = await fetch(
                 `${BACKEND_BASE_URL}/api/chat`,
                 {
@@ -869,6 +857,11 @@ async function sendMessage() {
 
             if (data && data.success !== false && data.response) {
                 addMessageToChat("ai", data.response);
+                
+                // Guest limit check
+                if (data.remaining_messages !== undefined && data.remaining_messages <= 0) {
+                    showGuestLimitWarning();
+                }
             } else {
                 const fallbackResponse = generateAIResponse(message);
                 addMessageToChat("ai", fallbackResponse);
@@ -877,6 +870,7 @@ async function sendMessage() {
             saveConversation();
         } catch (error) {
             removeTypingIndicator();
+            console.error("Chat API Error:", error);
             const fallbackResponse = generateAIResponse(message);
             addMessageToChat("ai", fallbackResponse);
             saveConversation();
@@ -884,6 +878,20 @@ async function sendMessage() {
     } else {
         saveConversation();
     }
+}
+
+// ✅ GUEST LIMIT WARNING FUNCTION
+function showGuestLimitWarning() {
+    const warningDiv = document.createElement('div');
+    warningDiv.className = 'guest-limit-warning';
+    warningDiv.innerHTML = `
+        <div class="warning-content">
+            <h3>🚫 Free Limit Reached</h3>
+            <p>You've used all 3 free messages. Sign up for unlimited access!</p>
+            <button onclick="window.location.href='login.html'">Sign Up Now</button>
+        </div>
+    `;
+    document.body.appendChild(warningDiv);
 }
 
 // ✅ Helper Function: Message Display
@@ -1326,7 +1334,7 @@ Array.from(textColorPicker.children).forEach((option) => {
     });
 });
 
-// ✅ AUTO SCROLL CODE - ChatGPT jaisa smooth auto scroll
+// ✅ AUTO SCROLL CODE
 function autoScrollToBottom() {
     const messagesContainer = document.getElementById('messagesContainer');
     if (messagesContainer) {
@@ -1386,17 +1394,20 @@ function initAutoScrollObserver() {
 // Initialize auto scroll
 initAutoScrollObserver();
 
-// ✅ FIXED: Health Check with new backend URL
+// ✅ PAGE LOAD PE BACKEND CHECK KARO
 window.addEventListener("load", function () {
-    console.log("✅ AI Problem Solve Ready!");
-    // Auto-test backend connection
+    console.log("🚀 AI Problem Solve Frontend Loaded - PythonAnywhere Version");
+    
+    // Auto-check backend connection
     setTimeout(() => {
-        // ✅ FIXED URL
-        fetch(`${BACKEND_BASE_URL}/api/health`)
-            .then((response) => response.json())
-            .then((data) => console.log("🔧 Backend Status:", data.status))
-            .catch((err) => console.log("⚠️ Backend Check:", err));
+        checkBackendHealth().then(success => {
+            if (success) {
+                console.log("✅ Backend connected successfully!");
+            } else {
+                console.log("❌ Backend connection failed!");
+            }
+        });
     }, 1000);
 });
 
-console.log("🎯 AI Problem Solve JavaScript Loaded Successfully!");
+console.log("🎯 AI Problem Solve JavaScript - PythonAnywhere Version Loaded!");
