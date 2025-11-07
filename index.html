@@ -1,14 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
- <meta name="google-site-verification" content="QGAC2Jplumbg2qTONhRetPHxFgyr4kedInaocXNiZ7g" />
+    <meta name="google-site-verification" content="QGAC2Jplumbg2qTONhRetPHxFgyr4kedInaocXNiZ7g" />
     <meta name="description" content="AI Problem Solver - Get AI-powered solutions for your problems. Login to access advanced AI tools and services.">
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AI Problem Solver - AI Solutions Platform | Muhammad Haris</title>
-    <link rel="stylesheet" href="style.css" />
-    <link rel="icon" type="image/x-icon" href="https://cdn-icons-png.flaticon.com/512/4712/4712035.png">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   </head>
   <body>
     <div class="app-container">
@@ -231,70 +228,57 @@
       </div>
     </div>
 
-    
-<script>
-
-(function() {
-    // Override ALL console methods
-    const originalConsole = {
-        log: console.log,
-        debug: console.debug,
-        info: console.info,
-        warn: console.warn,
-        error: console.error
-    };
-  
-  })();
-    
-// SIMPLE OFFLINE AUTH CHECK - No backend dependency
-document.addEventListener('DOMContentLoaded', function() {
-    console.log("AI Problem Solve - Main App Loading");
-    
-    // Simple authentication check
-    const token = localStorage.getItem('token');
-    const currentUser = localStorage.getItem('currentUser');
-    
-    console.log("Auth status - Token:", !!token, "User:", !!currentUser);
-    
-    // If no authentication, redirect to login
-    if (!token || !currentUser) {
-        console.log("No authentication found, redirecting to login...");
-        window.location.href = "login.html";
-        return;
-    }
-    
-    console.log("User authenticated, loading app...");
-    initializeApp();
-});
-
-// Logout function
-function logout() {
-    if(confirm('Are you sure you want to logout?')) {
-        // Clear all storage
-        localStorage.removeItem('currentUser');
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <script>
+      // Authentication check
+      document.addEventListener('DOMContentLoaded', function() {
+        console.log("AI Problem Solve - Main App Loading");
         
-        // Redirect to login
-        window.location.href = "login.html";
-    }
-}
+        // Simple authentication check
+        const token = localStorage.getItem('token');
+        const currentUser = localStorage.getItem('currentUser');
+        
+        console.log("Auth status - Token:", !!token, "User:", !!currentUser);
+        
+        // If no authentication, redirect to login
+        if (!token || !currentUser) {
+          console.log("No authentication found, redirecting to login...");
+          window.location.href = "login.html";
+          return;
+        }
+        
+        console.log("User authenticated, loading app...");
+        initializeApp();
+      });
 
-// Close settings modal function
-function closeSettingsModal() {
-    document.getElementById('settingsModal').style.display = 'none';
-}
+      // Logout function
+      function logout() {
+        if(confirm('Are you sure you want to logout?')) {
+          // Clear all storage
+          localStorage.removeItem('currentUser');
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          
+          // Redirect to login
+          window.location.href = "login.html";
+        }
+      }
 
-// Initialize app functionality
-function initializeApp() {
-    console.log("Initializing app features...");
-    
-    // Tab switching
-    const tabButtons = document.querySelectorAll('.tab-button');
-    const tabPanes = document.querySelectorAll('.tab-pane');
-    
-    tabButtons.forEach(button => {
-        button.addEventListener('click', function() {
+      // Close settings modal function
+      function closeSettingsModal() {
+        document.getElementById('settingsModal').style.display = 'none';
+      }
+
+      // Initialize app functionality
+      function initializeApp() {
+        console.log("Initializing app features...");
+        
+        // Tab switching
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabPanes = document.querySelectorAll('.tab-pane');
+        
+        tabButtons.forEach(button => {
+          button.addEventListener('click', function() {
             const targetTab = this.getAttribute('data-tab');
             
             tabButtons.forEach(btn => btn.classList.remove('active'));
@@ -302,172 +286,416 @@ function initializeApp() {
             
             this.classList.add('active');
             document.getElementById(targetTab + 'Tab').classList.add('active');
+          });
         });
-    });
 
-    // Modal functionality
-    const settingsBtn = document.getElementById('settingsBtn');
-    const settingsModal = document.getElementById('settingsModal');
-    const closeSettings = document.getElementById('closeSettings');
-    const cancelSettings = document.getElementById('cancelSettings');
+        // Modal functionality
+        const settingsBtn = document.getElementById('settingsBtn');
+        const settingsModal = document.getElementById('settingsModal');
+        const closeSettings = document.getElementById('closeSettings');
+        const cancelSettings = document.getElementById('cancelSettings');
 
-    if(settingsBtn) {
-        settingsBtn.addEventListener('click', function() {
+        if(settingsBtn) {
+          settingsBtn.addEventListener('click', function() {
             settingsModal.style.display = 'block';
-        });
-    }
+          });
+        }
 
-    if(closeSettings) {
-        closeSettings.addEventListener('click', closeSettingsModal);
-    }
+        if(closeSettings) {
+          closeSettings.addEventListener('click', closeSettingsModal);
+        }
 
-    if(cancelSettings) {
-        cancelSettings.addEventListener('click', closeSettingsModal);
-    }
+        if(cancelSettings) {
+          cancelSettings.addEventListener('click', closeSettingsModal);
+        }
 
-    // Save settings
-    const saveSettings = document.getElementById('saveSettings');
-    if(saveSettings) {
-        saveSettings.addEventListener('click', function() {
+        // Save settings
+        const saveSettings = document.getElementById('saveSettings');
+        if(saveSettings) {
+          saveSettings.addEventListener('click', function() {
             closeSettingsModal();
             alert('Settings saved successfully!');
-        });
-    }
-
-    // Show current user info
-    try {
-        const userData = JSON.parse(localStorage.getItem('currentUser') || '{}');
-        console.log("Current user:", userData);
-        if(userData.email) {
-            console.log("Welcome:", userData.email);
+          });
         }
-    } catch(e) {
-        console.log("User data format issue:", e);
-    }
 
-    console.log("App initialized successfully!");
-}
-
-// Basic chat functions
-function sendMessage() {
-    const userInput = document.getElementById('userInput');
-    const message = userInput.value.trim();
-    
-    if(message) {
-        console.log("Sending message:", message);
-        // Add your AI integration here
-        userInput.value = '';
+        // Mobile menu toggle
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.querySelector('.sidebar');
         
-        // Auto-response simulation
+        if(menuToggle && sidebar) {
+          menuToggle.addEventListener('click', function() {
+            sidebar.classList.toggle('mobile-active');
+          });
+        }
+
+        // Image upload functionality
+        const imageInput = document.getElementById('imageInput');
+        const uploadBtn = document.getElementById('uploadBtn');
+        
+        if(uploadBtn && imageInput) {
+          uploadBtn.addEventListener('click', function() {
+            imageInput.click();
+          });
+        }
+
+        if(imageInput) {
+          imageInput.addEventListener('change', function() {
+            if(this.files && this.files[0]) {
+              const fileName = document.getElementById('fileName');
+              fileName.textContent = this.files[0].name;
+              
+              // Display the uploaded image in chat
+              displayImageMessage(this.files[0], true);
+            }
+          });
+        }
+
+        console.log("App initialized successfully!");
+      }
+
+      // Display image message in chat
+      function displayImageMessage(file, isUser) {
+        const messagesContainer = document.getElementById('messagesContainer');
+        const welcomeMessage = document.getElementById('welcomeMessage');
+        
+        // Hide welcome message if it's visible
+        if(welcomeMessage) {
+          welcomeMessage.style.display = 'none';
+        }
+        
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${isUser ? 'user-message' : 'ai-message'}`;
+        
+        const messageHeader = document.createElement('div');
+        messageHeader.className = 'message-header';
+        
+        const avatar = document.createElement('img');
+        avatar.className = 'message-avatar';
+        avatar.src = isUser 
+          ? 'https://static.vecteezy.com/system/resources/previews/048/926/084/non_2x/silver-membership-icon-default-avatar-profile-icon-membership-icon-social-media-user-image-illustration-vector.jpg'
+          : 'https://cdn-icons-png.flaticon.com/512/4712/4712035.png';
+        avatar.alt = isUser ? 'User Avatar' : 'AI Avatar';
+        
+        const sender = document.createElement('div');
+        sender.className = 'message-sender';
+        sender.textContent = isUser ? 'You' : 'AI Problem Solver';
+        
+        messageHeader.appendChild(avatar);
+        messageHeader.appendChild(sender);
+        
+        const messageImage = document.createElement('div');
+        messageImage.className = 'message-image';
+        
+        const img = document.createElement('img');
+        img.src = URL.createObjectURL(file);
+        img.alt = 'Uploaded image';
+        
+        messageImage.appendChild(img);
+        
+        const messageTime = document.createElement('div');
+        messageTime.className = 'message-time';
+        messageTime.textContent = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        
+        messageDiv.appendChild(messageHeader);
+        messageDiv.appendChild(messageImage);
+        messageDiv.appendChild(messageTime);
+        
+        messagesContainer.appendChild(messageDiv);
+        
+        // Scroll to bottom
+        scrollAfterMessage();
+        
+        // If it's a user image, simulate AI response after a delay
+        if(isUser) {
+          setTimeout(() => {
+            simulateAIResponse(file);
+          }, 1000);
+        }
+      }
+
+      // Simulate AI response with image
+      function simulateAIResponse(userImageFile) {
+        const messagesContainer = document.getElementById('messagesContainer');
+        
+        // Create typing indicator
+        const typingIndicator = document.createElement('div');
+        typingIndicator.className = 'typing-indicator';
+        typingIndicator.innerHTML = `
+          <div class="message-header">
+            <img class="message-avatar" src="https://cdn-icons-png.flaticon.com/512/4712/4712035.png" alt="AI Avatar">
+            <div class="message-sender">AI Problem Solver</div>
+          </div>
+          <div class="typing-dots">
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+          </div>
+        `;
+        
+        messagesContainer.appendChild(typingIndicator);
+        scrollAfterMessage();
+        
+        // Remove typing indicator after delay and show response
         setTimeout(() => {
-            const responses = [
-                "I understand your question about: " + message,
-                "That's an interesting point about: " + message,
-                "Let me help you with: " + message,
-                "I can assist you with that!"
-            ];
-            const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-            console.log("AI Response:", randomResponse);
-        }, 1000);
-    }
-}
+          typingIndicator.remove();
+          
+          // Create AI response
+          const messageDiv = document.createElement('div');
+          messageDiv.className = 'message ai-message';
+          
+          const messageHeader = document.createElement('div');
+          messageHeader.className = 'message-header';
+          
+          const avatar = document.createElement('img');
+          avatar.className = 'message-avatar';
+          avatar.src = 'https://cdn-icons-png.flaticon.com/512/4712/4712035.png';
+          avatar.alt = 'AI Avatar';
+          
+          const sender = document.createElement('div');
+          sender.className = 'message-sender';
+          sender.textContent = 'AI Problem Solver';
+          
+          messageHeader.appendChild(avatar);
+          messageHeader.appendChild(sender);
+          
+          const messageText = document.createElement('div');
+          messageText.className = 'message-text';
+          messageText.textContent = "I've analyzed your image. Here's what I found:";
+          
+          // Create AI image response (simulated)
+          const messageImage = document.createElement('div');
+          messageImage.className = 'message-image';
+          
+          const img = document.createElement('img');
+          // In a real app, this would be the AI-processed image
+          // For demo, we'll use a placeholder
+          img.src = 'https://via.placeholder.com/300x200/6a11cb/ffffff?text=AI+Analysis';
+          img.alt = 'AI Analysis Result';
+          
+          messageImage.appendChild(img);
+          
+          const additionalText = document.createElement('div');
+          additionalText.className = 'message-text';
+          additionalText.textContent = "The AI has processed your image and provided the analysis above. Is there anything specific you'd like me to help with?";
+          
+          const messageTime = document.createElement('div');
+          messageTime.className = 'message-time';
+          messageTime.textContent = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+          
+          messageDiv.appendChild(messageHeader);
+          messageDiv.appendChild(messageText);
+          messageDiv.appendChild(messageImage);
+          messageDiv.appendChild(additionalText);
+          messageDiv.appendChild(messageTime);
+          
+          messagesContainer.appendChild(messageDiv);
+          
+          // Scroll to bottom
+          scrollAfterAIResponse();
+        }, 2000);
+      }
 
-function clearChatHistory() {
-    if(confirm('Are you sure you want to clear all chat history?')) {
-        console.log("Chat history cleared");
-        alert('Chat history cleared!');
-    }
-}
+      // Send message function
+      function sendMessage() {
+        const userInput = document.getElementById('userInput');
+        const message = userInput.value.trim();
+        
+        if (message === '') return;
+        
+        // Hide welcome message
+        const welcomeMessage = document.getElementById('welcomeMessage');
+        if(welcomeMessage) {
+          welcomeMessage.style.display = 'none';
+        }
+        
+        // Create user message
+        const messagesContainer = document.getElementById('messagesContainer');
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'message user-message';
+        
+        const messageHeader = document.createElement('div');
+        messageHeader.className = 'message-header';
+        
+        const avatar = document.createElement('img');
+        avatar.className = 'message-avatar';
+        avatar.src = 'https://static.vecteezy.com/system/resources/previews/048/926/084/non_2x/silver-membership-icon-default-avatar-profile-icon-membership-icon-social-media-user-image-illustration-vector.jpg';
+        avatar.alt = 'User Avatar';
+        
+        const sender = document.createElement('div');
+        sender.className = 'message-sender';
+        sender.textContent = 'You';
+        
+        messageHeader.appendChild(avatar);
+        messageHeader.appendChild(sender);
+        
+        const messageText = document.createElement('div');
+        messageText.className = 'message-text';
+        messageText.textContent = message;
+        
+        const messageTime = document.createElement('div');
+        messageTime.className = 'message-time';
+        messageTime.textContent = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        
+        messageDiv.appendChild(messageHeader);
+        messageDiv.appendChild(messageText);
+        messageDiv.appendChild(messageTime);
+        
+        messagesContainer.appendChild(messageDiv);
+        
+        // Clear input and scroll
+        userInput.value = '';
+        scrollAfterMessage();
+        
+        // Simulate AI response
+        setTimeout(() => {
+          // Create typing indicator
+          const typingIndicator = document.createElement('div');
+          typingIndicator.className = 'typing-indicator';
+          typingIndicator.innerHTML = `
+            <div class="message-header">
+              <img class="message-avatar" src="https://cdn-icons-png.flaticon.com/512/4712/4712035.png" alt="AI Avatar">
+              <div class="message-sender">AI Problem Solver</div>
+            </div>
+            <div class="typing-dots">
+              <div class="typing-dot"></div>
+              <div class="typing-dot"></div>
+              <div class="typing-dot"></div>
+            </div>
+          `;
+          
+          messagesContainer.appendChild(typingIndicator);
+          scrollAfterMessage();
+          
+          // Remove typing indicator after delay and show response
+          setTimeout(() => {
+            typingIndicator.remove();
+            
+            // Create AI response
+            const aiMessageDiv = document.createElement('div');
+            aiMessageDiv.className = 'message ai-message';
+            
+            const aiMessageHeader = document.createElement('div');
+            aiMessageHeader.className = 'message-header';
+            
+            const aiAvatar = document.createElement('img');
+            aiAvatar.className = 'message-avatar';
+            aiAvatar.src = 'https://cdn-icons-png.flaticon.com/512/4712/4712035.png';
+            aiAvatar.alt = 'AI Avatar';
+            
+            const aiSender = document.createElement('div');
+            aiSender.className = 'message-sender';
+            aiSender.textContent = 'AI Problem Solver';
+            
+            aiMessageHeader.appendChild(aiAvatar);
+            aiMessageHeader.appendChild(aiSender);
+            
+            const aiMessageText = document.createElement('div');
+            aiMessageText.className = 'message-text';
+            
+            // Simple response based on message content
+            if (message.toLowerCase().includes('hello') || message.toLowerCase().includes('hi')) {
+              aiMessageText.textContent = "Hello! How can I assist you today?";
+            } else if (message.toLowerCase().includes('problem')) {
+              aiMessageText.textContent = "I understand you have a problem. Could you please provide more details so I can help you better?";
+            } else if (message.toLowerCase().includes('thank')) {
+              aiMessageText.textContent = "You're welcome! Is there anything else I can help you with?";
+            } else {
+              aiMessageText.textContent = "Thank you for your message. I'm analyzing your request and will provide the best possible solution.";
+            }
+            
+            const aiMessageTime = document.createElement('div');
+            aiMessageTime.className = 'message-time';
+            aiMessageTime.textContent = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            
+            aiMessageDiv.appendChild(aiMessageHeader);
+            aiMessageDiv.appendChild(aiMessageText);
+            aiMessageDiv.appendChild(aiMessageTime);
+            
+            messagesContainer.appendChild(aiMessageDiv);
+            
+            // Scroll to bottom
+            scrollAfterAIResponse();
+          }, 1500);
+        }, 500);
+      }
 
+      // AUTO SCROLL CODE - ChatGPT jaisa smooth auto scroll
+      function autoScrollToBottom() {
+        const messagesContainer = document.getElementById('messagesContainer');
+        if (messagesContainer) {
+          messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+      }
 
-    // AUTO SCROLL CODE - ChatGPT jaisa smooth auto scroll
-
-function autoScrollToBottom() {
-    const messagesContainer = document.getElementById('messagesContainer');
-    if (messagesContainer) {
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    }
-}
-
-function smoothAutoScroll() {
-    const messagesContainer = document.getElementById('messagesContainer');
-    if (messagesContainer) {
-        messagesContainer.scrollTo({
+      function smoothAutoScroll() {
+        const messagesContainer = document.getElementById('messagesContainer');
+        if (messagesContainer) {
+          messagesContainer.scrollTo({
             top: messagesContainer.scrollHeight,
             behavior: 'smooth'
-        });
-    }
-}
+          });
+        }
+      }
 
-function scrollAfterMessage() {
-    setTimeout(() => {
-        smoothAutoScroll();
-    }, 50);
-}
+      function scrollAfterMessage() {
+        setTimeout(() => {
+          smoothAutoScroll();
+        }, 50);
+      }
 
-function scrollAfterAIResponse() {
-    setTimeout(() => {
-        smoothAutoScroll();
-    }, 100);
-}
+      function scrollAfterAIResponse() {
+        setTimeout(() => {
+          smoothAutoScroll();
+        }, 100);
+      }
 
-// Send message function
-function sendMessage() {
-    const userInput = document.getElementById('userInput');
-    const message = userInput.value.trim();
-    
-    if (message === '') return;
-    
-    // User message display code yahan aayega
-    // ...
-    
-    // ✅ AUTO SCROLL AFTER USER MESSAGE
-    scrollAfterMessage();
-    
-    userInput.value = '';
-    
-    // AI response
-    setTimeout(() => {
-        // AI response display code yahan aayega
-        // ...
+      // Page load par scroll to bottom
+      window.addEventListener('load', function() {
+        setTimeout(() => {
+          autoScrollToBottom();
+        }, 500);
+      });
+
+      // Real-time auto scroll observer
+      function initAutoScrollObserver() {
+        const messagesContainer = document.getElementById('messagesContainer');
         
-        // ✅ AUTO SCROLL AFTER AI RESPONSE
-        scrollAfterAIResponse();
-    }, 1000);
-}
-
-// Page load par scroll to bottom
-window.addEventListener('load', function() {
-    setTimeout(() => {
-        autoScrollToBottom();
-    }, 500);
-});
-
-// Real-time auto scroll observer
-function initAutoScrollObserver() {
-    const messagesContainer = document.getElementById('messagesContainer');
-    
-    if (messagesContainer) {
-        const observer = new MutationObserver(function(mutations) {
+        if (messagesContainer) {
+          const observer = new MutationObserver(function(mutations) {
             mutations.forEach(function(mutation) {
-                if (mutation.type === 'childList') {
-                    scrollAfterMessage();
-                }
+              if (mutation.type === 'childList') {
+                scrollAfterMessage();
+              }
             });
-        });
-        
-        observer.observe(messagesContainer, {
+          });
+          
+          observer.observe(messagesContainer, {
             childList: true,
             subtree: true
-        });
-    }
-}
+          });
+        }
+      }
 
-// Initialize auto scroll
-initAutoScrollObserver();
+      // Initialize auto scroll
+      initAutoScrollObserver();
 
-// Baaki tumhara existing code yahan rahega...
-</script>
-    <script src="script.js"></script>
+      function clearChatHistory() {
+        if(confirm('Are you sure you want to clear all chat history?')) {
+          const messagesContainer = document.getElementById('messagesContainer');
+          const welcomeMessage = document.getElementById('welcomeMessage');
+          
+          if(messagesContainer) {
+            messagesContainer.innerHTML = '';
+          }
+          
+          if(welcomeMessage) {
+            welcomeMessage.style.display = 'flex';
+          }
+          
+          console.log("Chat history cleared");
+          alert('Chat history cleared!');
+        }
+      }
+    </script>
   </body>
 </html>
