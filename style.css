@@ -1964,6 +1964,7 @@
 #userInput::-webkit-scrollbar {
     display: none;
 }
+  }
 
 #userInput {
     -ms-overflow-style: none;
