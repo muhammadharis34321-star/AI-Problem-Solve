@@ -426,15 +426,16 @@
   }
   
   .profile-picture {
-  width: 80px;
+width: 80px;
 height: 80px;
 border-radius: 50%;
 object-fit: cover;
-border: 3px solid black; /* black border */
+border: 3px solid #333; /* thoda halka black / dark grey */
 margin-bottom: 10px;
 cursor: pointer;
 transition: var(--transition);
 box-shadow: 0 0 15px rgba(255, 255, 255, 0.8); /* white shadow behind border */
+
 
   }
   
