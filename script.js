@@ -1,3 +1,17 @@
+// Console messages control
+const DEBUG_MODE = false; // Set to false to hide all console logs
+
+// Override console methods
+if (!DEBUG_MODE) {
+    console.log = function() {};
+    console.info = function() {};
+    console.debug = function() {};
+    console.warn = function() {};
+    // console.error will still show errors
+}
+
+
+
 const translations = {
   en: {
     welcome: "Welcome, User",
