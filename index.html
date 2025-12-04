@@ -18,6 +18,129 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AI Problem Solver - AI Solutions Platform | Muhammad Haris</title>
     <link rel="stylesheet" href="style.css" />
+    <style>
+      /* Welcome Message Styling */
+      .welcome-message {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 40px 20px;
+        min-height: 400px;
+      }
+
+      /* AI Problem Solve Image */
+      .ai-logo-image {
+        max-width: 500px;
+        width: 90%;
+        height: auto;
+        margin-bottom: 30px;
+        border-radius: 15px;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        animation: fadeInScale 1s ease-out forwards;
+      }
+
+      .ai-logo-image:hover {
+        transform: scale(1.01);
+        transition: transform 0.3s ease;
+      }
+
+      /* Welcome Text */
+      .welcome-text {
+        font-size: 22px;
+        color: #555;
+        line-height: 1.6;
+        max-width: 700px;
+        margin: 0 auto;
+        font-weight: 500;
+        animation: fadeInUp 1s ease-out 0.5s forwards;
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      /* Tagline */
+      .tagline {
+        font-size: 18px;
+        color: #4285F4;
+        font-weight: 600;
+        margin-top: 15px;
+        padding: 8px 25px;
+        background: rgba(66, 133, 244, 0.1);
+        border-radius: 50px;
+        display: inline-block;
+        animation: fadeInUp 1s ease-out 0.8s forwards;
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      /* Animations */
+      @keyframes fadeInScale {
+        0% {
+          opacity: 0;
+          transform: scale(0.9);
+        }
+        100% {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+
+      @keyframes fadeInUp {
+        0% {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        100% {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* Responsive Design */
+      @media (max-width: 768px) {
+        .welcome-message {
+          padding: 30px 15px;
+          min-height: 350px;
+        }
+
+        .ai-logo-image {
+          max-width: 400px;
+          margin-bottom: 25px;
+        }
+
+        .welcome-text {
+          font-size: 18px;
+          padding: 0 15px;
+        }
+
+        .tagline {
+          font-size: 16px;
+          padding: 6px 20px;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .welcome-message {
+          padding: 20px 10px;
+          min-height: 300px;
+        }
+
+        .ai-logo-image {
+          max-width: 300px;
+          margin-bottom: 20px;
+        }
+
+        .welcome-text {
+          font-size: 16px;
+        }
+
+        .tagline {
+          font-size: 14px;
+          padding: 5px 15px;
+        }
+      }
+    </style>
   </head>
   <body>
     <div class="app-container">
@@ -96,11 +219,20 @@
 
         <div class="chat-container" id="chatContainer">
           <div class="welcome-message" id="welcomeMessage">
-            <h1 id="heading">AI PROBLEM SOLVE</h1>
-            <p>
-              How can I help you today? I can assist with problem solving and
-              much more!
+            <!-- AI Problem Solve Image -->
+            <img 
+              src="image.png" 
+              alt="AI Problem Solver" 
+              class="ai-logo-image"
+            />
+            
+            <!-- Welcome Text -->
+            <p class="welcome-text">
+              How can I help you today? I can assist with problem solving and much more!
             </p>
+            
+            <!-- Tagline -->
+    
           </div>
           <div class="messages-container" id="messagesContainer"></div>
         </div>
@@ -235,6 +367,26 @@
         console.log("App loading directly without authentication...");
         initializeApp();
       });
+
+      // Function to restart welcome animation
+      function restartWelcomeAnimation() {
+        const welcomeMessage = document.getElementById("welcomeMessage");
+        if (welcomeMessage) {
+          welcomeMessage.style.display = "flex";
+          
+          // Reset animations for all animated elements
+          const animatedElements = welcomeMessage.querySelectorAll('.ai-logo-image, .welcome-text, .tagline');
+          animatedElements.forEach(el => {
+            el.style.animation = 'none';
+            void el.offsetWidth; // Trigger reflow
+            if (el.classList.contains('ai-logo-image')) {
+              el.style.animation = 'fadeInScale 1s ease-out forwards';
+            } else {
+              el.style.animation = 'fadeInUp 1s ease-out forwards';
+            }
+          });
+        }
+      }
 
       // Initialize app functionality
       function initializeApp() {
@@ -687,7 +839,8 @@
           }
 
           if (welcomeMessage) {
-            welcomeMessage.style.display = "flex";
+            // Restart animation when welcome message is shown again
+            restartWelcomeAnimation();
           }
 
           console.log("Chat history cleared");
