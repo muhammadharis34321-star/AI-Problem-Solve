@@ -7,7 +7,7 @@
     />
     <meta
       name="description"
-      content="AI Problem Solver - Get AI-powered solutions for your problems. Access advanced AI tools and services."
+      content="AI Problem Solver - Get AI-powered solutions for your problems. Login to access advanced AI tools and services."
     />
     <meta charset="UTF-8" />
     <link
@@ -18,188 +18,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AI Problem Solver - AI Solutions Platform | Muhammad Haris</title>
     <link rel="stylesheet" href="style.css" />
-    <style>
-      /* Welcome Message Styling */
-      .welcome-message {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-        padding: 40px 20px;
-        min-height: 400px;
-      }
-
-      /* AI Problem Solve Image Container */
-      .ai-logo-container {
-        max-width: 500px;
-        width: 90%;
-        margin-bottom: 30px;
-        position: relative;
-      }
-
-      /* AI Problem Solve Image */
-      .ai-logo-image {
-        width: 100%;
-        height: auto;
-        border-radius: 15px;
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-        animation: fadeInScale 1s ease-out forwards;
-        border: 2px solid #4285F4;
-      }
-
-      .ai-logo-image:hover {
-        transform: scale(1.01);
-        transition: transform 0.3s ease;
-      }
-
-      /* Fallback text if image doesn't load */
-      .image-fallback {
-        display: none;
-        font-family: 'Arial', sans-serif;
-        font-size: 42px;
-        font-weight: bold;
-        color: white;
-        background: linear-gradient(45deg, #4285F4, #EA4335, #FBBC05, #34A853);
-        padding: 40px 20px;
-        border-radius: 15px;
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-        animation: fadeInScale 1s ease-out forwards;
-        text-align: center;
-        margin-bottom: 30px;
-        width: 100%;
-      }
-
-      /* Welcome Text */
-      .welcome-text {
-        font-size: 22px;
-        color: #555;
-        line-height: 1.6;
-        max-width: 700px;
-        margin: 0 auto;
-        font-weight: 500;
-        animation: fadeInUp 1s ease-out 0.5s forwards;
-        opacity: 0;
-        transform: translateY(20px);
-      }
-
-      /* Tagline */
-      .tagline {
-        font-size: 18px;
-        color: #4285F4;
-        font-weight: 600;
-        margin-top: 15px;
-        padding: 8px 25px;
-        background: rgba(66, 133, 244, 0.1);
-        border-radius: 50px;
-        display: inline-block;
-        animation: fadeInUp 1s ease-out 0.8s forwards;
-        opacity: 0;
-        transform: translateY(20px);
-      }
-
-      /* Animations */
-      @keyframes fadeInScale {
-        0% {
-          opacity: 0;
-          transform: scale(0.9);
-        }
-        100% {
-          opacity: 1;
-          transform: scale(1);
-        }
-      }
-
-      @keyframes fadeInUp {
-        0% {
-          opacity: 0;
-          transform: translateY(20px);
-        }
-        100% {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-
-      /* Loading spinner for image */
-      .image-loading {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 40px;
-        min-height: 200px;
-      }
-
-      .spinner {
-        width: 50px;
-        height: 50px;
-        border: 5px solid #f3f3f3;
-        border-top: 5px solid #4285F4;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-        margin-bottom: 20px;
-      }
-
-      @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-      }
-
-      /* Responsive Design */
-      @media (max-width: 768px) {
-        .welcome-message {
-          padding: 30px 15px;
-          min-height: 350px;
-        }
-
-        /* .ai-logo-container {
-          max-width: 400px;
-          margin-bottom: 25px;
-        } */
-
-        .image-fallback {
-          font-size: 32px;
-          padding: 30px 15px;
-        }
-
-        .welcome-text {
-          font-size: 18px;
-          padding: 0 15px;
-        }
-
-        .tagline {
-          font-size: 16px;
-          padding: 6px 20px;
-        }
-      }
-
-      @media (max-width: 480px) {
-        .welcome-message {
-          padding: 20px 10px;
-          min-height: 300px;
-        }
-
-        .ai-logo-container {
-          max-width: 300px;
-          margin-bottom: 20px;
-        }
-
-        .image-fallback {
-          font-size: 24px;
-          padding: 20px 10px;
-        }
-
-        .welcome-text {
-          font-size: 16px;
-        }
-
-        .tagline {
-          font-size: 14px;
-          padding: 5px 15px;
-        }
-      }
-    </style>
   </head>
   <body>
     <div class="app-container">
@@ -278,36 +96,16 @@
 
         <div class="chat-container" id="chatContainer">
           <div class="welcome-message" id="welcomeMessage">
-            <!-- AI Problem Solve Image with fallback -->
-            <div class="ai-logo-container">
-              <div class="image-loading" id="imageLoading">
-                <div class="spinner"></div>
-                <p>Loading AI Problem Solver...</p>
-              </div>
-              <img 
-                src="https://images.unsplash.com/photo-1677442136019-21780ecad995?q=80&w=1000&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" 
-                alt="AI Problem Solver" 
-                class="ai-logo-image"
-                id="aiLogoImage"
-                <!-- onload="imageLoaded()"
-                onload="imageLoaded()"
-                onerror="imageFailed()"
-              />
-              <div class="image-fallback" id="imageFallback">
-                🤖 AI PROBLEM SOLVER
-              </div>
-            </div>
-            
-            <!-- Welcome Text -->
-            <p class="welcome-text">
-              How can I help you today? I can assist with problem solving and much more!
+            <h1 id="heading">AI PROBLEM SOLVE</h1>
+            <p>
+              How can I help you today? I can assist with problem solving and
+              much more!
             </p>
-            
-            <!-- Tagline -->
-       
           </div>
           <div class="messages-container" id="messagesContainer"></div>
         </div>
+   
+      
 
         <div class="input-container">
           <div class="image-upload">
@@ -352,6 +150,7 @@
                 Appearance
               </button>
               <button class="tab-button" data-tab="history">History</button>
+              <button class="tab-button" data-tab="logout">Logout</button>
             </div>
             <div class="tab-content">
               <div class="tab-pane active" id="appearanceTab">
@@ -415,6 +214,34 @@
                   </button>
                 </div>
               </div>
+
+              <!-- SIRF LOGOUT TAB -->
+              <div class="tab-pane" id="logoutTab">
+                <div class="logout-section">
+                  <div class="logout-icon">
+                    <i class="fas fa-sign-out-alt"></i>
+                  </div>
+                  <h4>Logout from AI Tool</h4>
+                  <p>
+                    Are you sure you want to logout? You'll need to sign in
+                    again to access your account.
+                  </p>
+
+                  <div class="logout-actions">
+                    <button class="logout-btn-confirm" onclick="logout()">
+                      <i class="fas fa-sign-out-alt"></i>
+                      Yes, Logout
+                    </button>
+                    <button
+                      class="logout-btn-cancel"
+                      onclick="closeSettingsModal()"
+                    >
+                      <i class="fas fa-times"></i>
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -428,56 +255,43 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
     <script>
-    const BACKEND_URL = "https://python22.pythonanywhere.com/api/chat";
-
-      // Authentication check REMOVED - Direct app initialization
+      // Authentication check
       document.addEventListener("DOMContentLoaded", function () {
         console.log("AI Problem Solve - Main App Loading");
-        
-        // Direct initialization without login check
-        console.log("App loading directly without authentication...");
+
+        // Simple authentication check
+        const token = localStorage.getItem("token");
+        const currentUser = localStorage.getItem("currentUser");
+
+        console.log("Auth status - Token:", !!token, "User:", !!currentUser);
+
+        // If no authentication, redirect to login
+        if (!token || !currentUser) {
+          console.log("No authentication found, redirecting to login...");
+          window.location.href = "login.html";
+          return;
+        }
+
+        console.log("User authenticated, loading app...");
         initializeApp();
       });
 
-      // Image loading functions
-      function imageLoaded() {
-        const loadingElement = document.getElementById('imageLoading');
-        const imageElement = document.getElementById('aiLogoImage');
-        const fallbackElement = document.getElementById('imageFallback');
-        
-        if (loadingElement) loadingElement.style.display = 'none';
-        if (imageElement) imageElement.style.display = 'block';
-        if (fallbackElement) fallbackElement.style.display = 'none';
-      }
+      // Logout function
+      function logout() {
+        if (confirm("Are you sure you want to logout?")) {
+          // Clear all storage
+          localStorage.removeItem("currentUser");
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
 
-      function imageFailed() {
-        const loadingElement = document.getElementById('imageLoading');
-        const imageElement = document.getElementById('aiLogoImage');
-        const fallbackElement = document.getElementById('imageFallback');
-        
-        if (loadingElement) loadingElement.style.display = 'none';
-        if (imageElement) imageElement.style.display = 'none';
-        if (fallbackElement) fallbackElement.style.display = 'block';
-      }
-
-      // Function to restart welcome animation
-      function restartWelcomeAnimation() {
-        const welcomeMessage = document.getElementById("welcomeMessage");
-        if (welcomeMessage) {
-          welcomeMessage.style.display = "flex";
-          
-          // Reset animations for all animated elements
-          const animatedElements = welcomeMessage.querySelectorAll('.ai-logo-image, .welcome-text, .tagline, .image-fallback');
-          animatedElements.forEach(el => {
-            el.style.animation = 'none';
-            void el.offsetWidth; // Trigger reflow
-            if (el.classList.contains('ai-logo-image') || el.classList.contains('image-fallback')) {
-              el.style.animation = 'fadeInScale 1s ease-out forwards';
-            } else {
-              el.style.animation = 'fadeInUp 1s ease-out forwards';
-            }
-          });
+          // Redirect to login
+          window.location.href = "login.html";
         }
+      }
+
+      // Close settings modal function
+      function closeSettingsModal() {
+        document.getElementById("settingsModal").style.display = "none";
       }
 
       // Initialize app functionality
@@ -513,22 +327,18 @@
         }
 
         if (closeSettings) {
-          closeSettings.addEventListener("click", function() {
-            settingsModal.style.display = "none";
-          });
+          closeSettings.addEventListener("click", closeSettingsModal);
         }
 
         if (cancelSettings) {
-          cancelSettings.addEventListener("click", function() {
-            settingsModal.style.display = "none";
-          });
+          cancelSettings.addEventListener("click", closeSettingsModal);
         }
 
         // Save settings
         const saveSettings = document.getElementById("saveSettings");
         if (saveSettings) {
           saveSettings.addEventListener("click", function () {
-            settingsModal.style.display = "none";
+            closeSettingsModal();
             alert("Settings saved successfully!");
           });
         }
@@ -931,8 +741,7 @@
           }
 
           if (welcomeMessage) {
-            // Restart animation when welcome message is shown again
-            restartWelcomeAnimation();
+            welcomeMessage.style.display = "flex";
           }
 
           console.log("Chat history cleared");
