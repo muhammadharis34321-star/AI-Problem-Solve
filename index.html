@@ -7,7 +7,7 @@
     />
     <meta
       name="description"
-      content="AI Problem Solver - Get AI-powered solutions for your problems. Login to access advanced AI tools and services."
+      content="AI Problem Solver - Get AI-powered solutions for your problems. Access advanced AI tools and services."
     />
     <meta charset="UTF-8" />
     <link
@@ -104,8 +104,6 @@
           </div>
           <div class="messages-container" id="messagesContainer"></div>
         </div>
-   
-      
 
         <div class="input-container">
           <div class="image-upload">
@@ -150,7 +148,6 @@
                 Appearance
               </button>
               <button class="tab-button" data-tab="history">History</button>
-              <button class="tab-button" data-tab="logout">Logout</button>
             </div>
             <div class="tab-content">
               <div class="tab-pane active" id="appearanceTab">
@@ -214,34 +211,6 @@
                   </button>
                 </div>
               </div>
-
-              <!-- SIRF LOGOUT TAB -->
-              <div class="tab-pane" id="logoutTab">
-                <div class="logout-section">
-                  <div class="logout-icon">
-                    <i class="fas fa-sign-out-alt"></i>
-                  </div>
-                  <h4>Logout from AI Tool</h4>
-                  <p>
-                    Are you sure you want to logout? You'll need to sign in
-                    again to access your account.
-                  </p>
-
-                  <div class="logout-actions">
-                    <button class="logout-btn-confirm" onclick="logout()">
-                      <i class="fas fa-sign-out-alt"></i>
-                      Yes, Logout
-                    </button>
-                    <button
-                      class="logout-btn-cancel"
-                      onclick="closeSettingsModal()"
-                    >
-                      <i class="fas fa-times"></i>
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -255,44 +224,17 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
     <script>
-      // Authentication check
+    const BACKEND_URL = "https://python22.pythonanywhere.com/api/chat";
+
+
+      // Authentication check REMOVED - Direct app initialization
       document.addEventListener("DOMContentLoaded", function () {
         console.log("AI Problem Solve - Main App Loading");
-
-        // Simple authentication check
-        const token = localStorage.getItem("token");
-        const currentUser = localStorage.getItem("currentUser");
-
-        console.log("Auth status - Token:", !!token, "User:", !!currentUser);
-
-        // If no authentication, redirect to login
-        if (!token || !currentUser) {
-          console.log("No authentication found, redirecting to login...");
-          window.location.href = "login.html";
-          return;
-        }
-
-        console.log("User authenticated, loading app...");
+        
+        // Direct initialization without login check
+        console.log("App loading directly without authentication...");
         initializeApp();
       });
-
-      // Logout function
-      function logout() {
-        if (confirm("Are you sure you want to logout?")) {
-          // Clear all storage
-          localStorage.removeItem("currentUser");
-          localStorage.removeItem("token");
-          localStorage.removeItem("user");
-
-          // Redirect to login
-          window.location.href = "login.html";
-        }
-      }
-
-      // Close settings modal function
-      function closeSettingsModal() {
-        document.getElementById("settingsModal").style.display = "none";
-      }
 
       // Initialize app functionality
       function initializeApp() {
@@ -327,18 +269,22 @@
         }
 
         if (closeSettings) {
-          closeSettings.addEventListener("click", closeSettingsModal);
+          closeSettings.addEventListener("click", function() {
+            settingsModal.style.display = "none";
+          });
         }
 
         if (cancelSettings) {
-          cancelSettings.addEventListener("click", closeSettingsModal);
+          cancelSettings.addEventListener("click", function() {
+            settingsModal.style.display = "none";
+          });
         }
 
         // Save settings
         const saveSettings = document.getElementById("saveSettings");
         if (saveSettings) {
           saveSettings.addEventListener("click", function () {
-            closeSettingsModal();
+            settingsModal.style.display = "none";
             alert("Settings saved successfully!");
           });
         }
