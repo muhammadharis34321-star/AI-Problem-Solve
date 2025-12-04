@@ -30,20 +30,44 @@
         min-height: 400px;
       }
 
-      /* AI Problem Solve Image */
-      .ai-logo-image {
+      /* AI Problem Solve Image Container */
+      .ai-logo-container {
         max-width: 500px;
         width: 90%;
-        height: auto;
         margin-bottom: 30px;
+        position: relative;
+      }
+
+      /* AI Problem Solve Image */
+      .ai-logo-image {
+        width: 100%;
+        height: auto;
         border-radius: 15px;
         box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
         animation: fadeInScale 1s ease-out forwards;
+        border: 2px solid #4285F4;
       }
 
       .ai-logo-image:hover {
         transform: scale(1.01);
         transition: transform 0.3s ease;
+      }
+
+      /* Fallback text if image doesn't load */
+      .image-fallback {
+        display: none;
+        font-family: 'Arial', sans-serif;
+        font-size: 42px;
+        font-weight: bold;
+        color: white;
+        background: linear-gradient(45deg, #4285F4, #EA4335, #FBBC05, #34A853);
+        padding: 40px 20px;
+        border-radius: 15px;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        animation: fadeInScale 1s ease-out forwards;
+        text-align: center;
+        margin-bottom: 30px;
+        width: 100%;
       }
 
       /* Welcome Text */
@@ -97,6 +121,31 @@
         }
       }
 
+      /* Loading spinner for image */
+      .image-loading {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 40px;
+        min-height: 200px;
+      }
+
+      .spinner {
+        width: 50px;
+        height: 50px;
+        border: 5px solid #f3f3f3;
+        border-top: 5px solid #4285F4;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 20px;
+      }
+
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+
       /* Responsive Design */
       @media (max-width: 768px) {
         .welcome-message {
@@ -104,9 +153,14 @@
           min-height: 350px;
         }
 
-        .ai-logo-image {
+        .ai-logo-container {
           max-width: 400px;
           margin-bottom: 25px;
+        }
+
+        .image-fallback {
+          font-size: 32px;
+          padding: 30px 15px;
         }
 
         .welcome-text {
@@ -126,9 +180,14 @@
           min-height: 300px;
         }
 
-        .ai-logo-image {
+        .ai-logo-container {
           max-width: 300px;
           margin-bottom: 20px;
+        }
+
+        .image-fallback {
+          font-size: 24px;
+          padding: 20px 10px;
         }
 
         .welcome-text {
@@ -219,12 +278,24 @@
 
         <div class="chat-container" id="chatContainer">
           <div class="welcome-message" id="welcomeMessage">
-            <!-- AI Problem Solve Image -->
-            <img 
-              src="blob:https://web.whatsapp.com/16d77b96-4e82-4696-ad38-7a4f2428764a" 
-              alt="AI Problem Solver" 
-              class="ai-logo-image"
-            />
+            <!-- AI Problem Solve Image with fallback -->
+            <div class="ai-logo-container">
+              <div class="image-loading" id="imageLoading">
+                <div class="spinner"></div>
+                <p>Loading AI Problem Solver...</p>
+              </div>
+              <img 
+                src="https://images.unsplash.com/photo-1677442136019-21780ecad995?q=80&w=1000&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" 
+                alt="AI Problem Solver" 
+                class="ai-logo-image"
+                id="aiLogoImage"
+                onload="imageLoaded()"
+                onerror="imageFailed()"
+              />
+              <div class="image-fallback" id="imageFallback">
+                🤖 AI PROBLEM SOLVER
+              </div>
+            </div>
             
             <!-- Welcome Text -->
             <p class="welcome-text">
@@ -232,7 +303,9 @@
             </p>
             
             <!-- Tagline -->
-    
+            <div class="tagline">
+              Your Intelligent AI Assistant
+            </div>
           </div>
           <div class="messages-container" id="messagesContainer"></div>
         </div>
@@ -358,7 +431,6 @@
     <script>
     const BACKEND_URL = "https://python22.pythonanywhere.com/api/chat";
 
-
       // Authentication check REMOVED - Direct app initialization
       document.addEventListener("DOMContentLoaded", function () {
         console.log("AI Problem Solve - Main App Loading");
@@ -368,6 +440,27 @@
         initializeApp();
       });
 
+      // Image loading functions
+      function imageLoaded() {
+        const loadingElement = document.getElementById('imageLoading');
+        const imageElement = document.getElementById('aiLogoImage');
+        const fallbackElement = document.getElementById('imageFallback');
+        
+        if (loadingElement) loadingElement.style.display = 'none';
+        if (imageElement) imageElement.style.display = 'block';
+        if (fallbackElement) fallbackElement.style.display = 'none';
+      }
+
+      function imageFailed() {
+        const loadingElement = document.getElementById('imageLoading');
+        const imageElement = document.getElementById('aiLogoImage');
+        const fallbackElement = document.getElementById('imageFallback');
+        
+        if (loadingElement) loadingElement.style.display = 'none';
+        if (imageElement) imageElement.style.display = 'none';
+        if (fallbackElement) fallbackElement.style.display = 'block';
+      }
+
       // Function to restart welcome animation
       function restartWelcomeAnimation() {
         const welcomeMessage = document.getElementById("welcomeMessage");
@@ -375,11 +468,11 @@
           welcomeMessage.style.display = "flex";
           
           // Reset animations for all animated elements
-          const animatedElements = welcomeMessage.querySelectorAll('.ai-logo-image, .welcome-text, .tagline');
+          const animatedElements = welcomeMessage.querySelectorAll('.ai-logo-image, .welcome-text, .tagline, .image-fallback');
           animatedElements.forEach(el => {
             el.style.animation = 'none';
             void el.offsetWidth; // Trigger reflow
-            if (el.classList.contains('ai-logo-image')) {
+            if (el.classList.contains('ai-logo-image') || el.classList.contains('image-fallback')) {
               el.style.animation = 'fadeInScale 1s ease-out forwards';
             } else {
               el.style.animation = 'fadeInUp 1s ease-out forwards';
