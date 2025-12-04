@@ -43,6 +43,8 @@
   padding: 0;
   overflow-x: hidden; /* Ye line
   }
+
+      
   
   
   /* Logout Tab Styles */
@@ -50,7 +52,15 @@
     text-align: center;
     padding: 30px 20px;
   }
-  
+
+      
+.welcome-message img{
+  height: 180px;
+  width: 350px;
+  margin-top: -150px;
+}
+
+
   .logout-icon {
     font-size: 64px;
     color: #ff6b6b;
