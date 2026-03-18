@@ -43,38 +43,29 @@
   padding: 0;
   overflow-x: hidden; /* Ye line
   }
-/* Affiliate Banner CSS */
-.affiliate-banner {
-  text-align: center;           /* Center me align kare */
-  margin: 30px auto;            /* Top & bottom spacing */
-  padding: 15px;                /* Thoda padding */
-  background: #f9f9f9;          /* Soft background color */
-  border: 2px solid #e0e0e0;    /* Border */
-  border-radius: 12px;          /* Rounded corners */
-  max-width: 320px;             /* Banner width */
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1); /* Shadow for depth */
-  transition: transform 0.3s, box-shadow 0.3s; /* Hover effect */
+.daraz-aff-banner {
+  text-align: center;
+  margin: 30px auto;
+  padding: 10px;
+  border: 2px solid #ff5000; /* Daraz color */
+  background: #fff8f0;
+  border-radius: 10px;
+  max-width: 320px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  transition: transform 0.3s, box-shadow 0.3s;
 }
 
-.affiliate-banner img {
-  width: 100%;                  /* Responsive image */
-  border-radius: 10px;          /* Rounded image */
+.daraz-aff-banner img {
+  width: 100%;
+  border-radius: 8px;
 }
 
-/* Hover effect */
-.affiliate-banner:hover {
-  transform: scale(1.05);       /* Slight zoom on hover */
-  box-shadow: 0 8px 16px rgba(0,0,0,0.2); /* Stronger shadow */
-  cursor: pointer;              /* Pointer cursor */
+.daraz-aff-banner:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+  cursor: pointer;
 }
 
-/* Mobile responsive */
-@media (max-width: 500px) {
-  .affiliate-banner {
-    max-width: 90%;             /* Mobile friendly width */
-    margin: 20px auto;
-  }
-}
 
       
   
