@@ -41,8 +41,10 @@
     transition: var(--transition);
         margin: 0;
   padding: 0;
-  overflow-x: hidden; /* Ye line
-  }
+  overflow-x: hidden; 
+      }
+
+      
 .daraz-aff-banner {
   text-align: center;
   margin: 30px auto;
@@ -65,7 +67,6 @@
   box-shadow: 0 8px 16px rgba(0,0,0,0.2);
   cursor: pointer;
 }
-
 
       
   
